@@ -1,0 +1,2069 @@
+
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap');
+
+/* ========================================
+   1. CONFIGURAÇÕES GERAIS
+======================================== */
+
+:root {
+    font-family: 'DM Sans', sans-serif;
+    color: #28223a;
+    background: #f8f7fc;
+    font-synthesis: none;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    font-optical-sizing: auto;
+    font-weight: 400;
+
+    --roxo: #7541ce;
+    --roxo-escuro: #35234f;
+    --roxo-claro: #f1eaff;
+    --lilas: #9674d0;
+    --texto-secundario: #92899f;
+    --borda: #eeeaf6;
+    --fundo: #f8f7fc;
+    --branco: #ffffff;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+html {
+    min-width: 320px;
+    min-height: 100%;
+    scroll-behavior: smooth;
+}
+
+body {
+    margin: 0;
+    min-width: 320px;
+    min-height: 100vh;
+    background: var(--fundo);
+}
+
+body,
+button,
+input,
+select,
+textarea {
+    font-family: 'DM Sans', sans-serif;
+}
+
+button,
+a {
+    font: inherit;
+}
+
+button {
+    cursor: pointer;
+}
+
+button:disabled {
+    cursor: not-allowed;
+    opacity: 0.65;
+}
+
+a {
+    text-decoration: none;
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+    outline: 3px solid #bda0f3;
+    outline-offset: 3px;
+}
+
+#root {
+    min-height: 100vh;
+}
+
+.aplicativo {
+    min-height: 100vh;
+}
+
+/* ========================================
+   2. MENU LATERAL
+======================================== */
+
+.menu-lateral {
+    position: fixed;
+    inset: 0 auto 0 0;
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    width: 250px;
+    padding: 26px 20px 20px;
+    overflow-y: auto;
+    background: #ffffff;
+    border-right: 1px solid var(--borda);
+}
+
+.marca {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    padding: 0 8px;
+    color: #32234f;
+    font-family: 'Manrope', sans-serif;
+    font-size: 21px;
+    font-weight: 800;
+    letter-spacing: -0.8px;
+}
+
+.marca-imagem {
+    width: 58px;
+    height: 58px;
+    flex-shrink: 0;
+    object-fit: contain;
+}
+
+.menu-titulo {
+    margin: 52px 8px 15px;
+    color: #aaa3ba;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+}
+
+.navegacao {
+    display: grid;
+    gap: 7px;
+}
+
+.link-menu {
+    display: flex;
+    align-items: center;
+    gap: 13px;
+    padding: 13px 14px;
+    border-radius: 11px;
+    color: #817a92;
+    font-size: 13px;
+    font-weight: 600;
+    transition: background 0.2s, color 0.2s;
+}
+
+.link-menu:hover {
+    background: #f7f3ff;
+    color: #7945d4;
+}
+
+.link-menu.ativo {
+    color: var(--roxo);
+    background: var(--roxo-claro);
+}
+
+.link-menu:first-letter {
+    font-size: 17px;
+}
+
+/* Cartão motivacional */
+
+.cartao-motivacao {
+    margin-top: auto;
+    padding: 19px 16px;
+    border: 1px solid #eee5ff;
+    border-radius: 15px;
+    background: linear-gradient(145deg, #faf7ff, #f2eaff);
+    text-align: center;
+}
+
+.estrela {
+    color: #8955e8;
+    font-size: 24px;
+}
+
+.cartao-motivacao h3 {
+    margin: 12px 0 7px;
+    font-family: 'Manrope', sans-serif;
+    font-size: 13px;
+}
+
+.cartao-motivacao p {
+    margin: 0;
+    color: #81768f;
+    font-size: 11px;
+    line-height: 1.7;
+}
+
+/* Perfil do menu */
+
+.perfil {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    margin-top: 22px;
+    padding: 17px 5px 0;
+    border-top: 1px solid #f0edf5;
+}
+
+.avatar {
+    display: grid;
+    place-items: center;
+    width: 38px;
+    height: 38px;
+    flex-shrink: 0;
+    border-radius: 50%;
+    background: #e9ddff;
+    color: #7041c0;
+    font-weight: 700;
+}
+
+.perfil div:last-child {
+    display: grid;
+    gap: 4px;
+}
+
+.perfil strong {
+    font-size: 12px;
+}
+
+.perfil span {
+    color: #9991a8;
+    font-size: 11px;
+}
+
+/* ========================================
+   3. ÁREA PRINCIPAL E ALINHAMENTO
+======================================== */
+
+.conteudo {
+    width: calc(100% - 250px);
+    min-height: 100vh;
+    margin-left: 250px;
+    padding: 38px clamp(28px, 4vw, 64px);
+}
+
+.conteudo > * {
+    min-width: 0;
+}
+
+.conteudo > .rodape {
+    margin-top: 35px;
+}
+
+.cabecalho {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    margin-bottom: 30px;
+}
+
+.cabecalho > div {
+    min-width: 0;
+}
+
+.sobretitulo {
+    margin: 0 0 10px;
+    color: #9674d0;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1.7px;
+}
+
+.cabecalho h1 {
+    margin: 0;
+    color: #17131f;
+    font-family: 'Manrope', sans-serif;
+    font-size: clamp(25px, 3vw, 34px);
+    font-weight: 800;
+    letter-spacing: -1.4px;
+    line-height: 1.25;
+}
+
+.cabecalho h1 span {
+    color: #9b70e9;
+}
+
+.subtitulo {
+    margin: 9px 0 0;
+    color: #9992a8;
+    font-size: 13px;
+    line-height: 1.6;
+}
+
+.data-hoje {
+    padding: 12px 16px;
+    border: 1px solid #ece7f4;
+    border-radius: 12px;
+    background: white;
+    color: #756b88;
+    font-size: 12px;
+    white-space: nowrap;
+}
+
+.data-hoje span {
+    margin-right: 7px;
+    color: #8d5ae3;
+}
+
+/* Mantém as páginas dentro da área disponível */
+
+.secao-disciplinas,
+.secao-resumo {
+    width: 100%;
+    max-width: 1180px;
+    margin: 0 auto;
+}
+
+.secao-disciplinas {
+    margin-top: 0;
+}
+
+.secao-resumo {
+    margin-top: 35px;
+}
+
+/* ========================================
+   4. DASHBOARD E DESTAQUE
+======================================== */
+
+.destaque {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 245px;
+    padding: 34px 38px;
+    overflow: hidden;
+    border-radius: 20px;
+    background: linear-gradient(
+        110deg,
+        #3c275d 0%,
+        #63409a 57%,
+        #9166cb 100%
+    );
+    color: white;
+}
+
+.etiqueta {
+    color: #ddcbff;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 1.7px;
+}
+
+.destaque h2 {
+    margin: 13px 0 10px;
+    font-family: 'Manrope', sans-serif;
+    font-size: clamp(23px, 2.6vw, 31px);
+    line-height: 1.25;
+    letter-spacing: -1px;
+}
+
+.destaque p {
+    max-width: 360px;
+    margin: 0 0 20px;
+    color: #e1d6f2;
+    font-size: 12px;
+    line-height: 1.7;
+}
+
+.botao-destaque {
+    display: inline-flex;
+    align-items: center;
+    gap: 17px;
+    padding: 12px 16px;
+    border-radius: 9px;
+    background: white;
+    color: #5c378d;
+    font-size: 11px;
+    font-weight: 700;
+    transition: transform 0.2s;
+}
+
+.botao-destaque:hover {
+    transform: translateY(-2px);
+}
+
+.ilustracao {
+    position: relative;
+    width: 220px;
+    height: 190px;
+    flex-shrink: 0;
+}
+
+.orbita {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    border: 1px solid #ffffff35;
+    border-radius: 50%;
+    transform: translate(-50%, -50%) rotate(-25deg);
+}
+
+.orbita-1 {
+    width: 190px;
+    height: 105px;
+}
+
+.orbita-2 {
+    width: 145px;
+    height: 170px;
+}
+
+.livro {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    display: grid;
+    place-items: center;
+    width: 86px;
+    height: 86px;
+    border: 1px solid #ffffff55;
+    border-radius: 25px;
+    background: linear-gradient(145deg, #d7c2ff, #a583e7);
+    box-shadow: 0 15px 45px #26153e55;
+    color: white;
+    font-size: 40px;
+    transform: translate(-50%, -50%) rotate(-9deg);
+}
+
+.brilho {
+    position: absolute;
+    color: #e8d8ff;
+}
+
+.brilho-1 {
+    top: 20px;
+    right: 24px;
+    font-size: 25px;
+}
+
+.brilho-2 {
+    bottom: 19px;
+    left: 15px;
+    font-size: 30px;
+}
+
+/* ========================================
+   5. TÍTULOS E CARTÕES DE RESUMO
+======================================== */
+
+.titulo-secao {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 15px;
+    margin-bottom: 17px;
+}
+
+.titulo-secao h2 {
+    margin: 0;
+    font-family: 'Manrope', sans-serif;
+    font-size: 18px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+}
+
+.titulo-secao p {
+    margin: 6px 0 0;
+    color: #9992a8;
+    font-size: 11px;
+    line-height: 1.6;
+}
+
+.grade-resumo {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+}
+
+.cartao-resumo {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 13px;
+    min-width: 0;
+    padding: 19px 17px;
+    border: 1px solid #efebf5;
+    border-radius: 15px;
+    background: white;
+}
+
+.icone-resumo {
+    display: grid;
+    place-items: center;
+    width: 43px;
+    height: 43px;
+    flex-shrink: 0;
+    border-radius: 12px;
+    font-size: 20px;
+}
+
+.lilas {
+    background: #f0e8ff;
+    color: #8b5cf6;
+}
+
+.azul {
+    background: #e2f5ff;
+    color: #299bc9;
+}
+
+.amarelo {
+    background: #fff3d8;
+    color: #d99a18;
+}
+
+.cartao-resumo div:nth-child(2) {
+    display: grid;
+    gap: 5px;
+    min-width: 0;
+}
+
+.cartao-resumo div:nth-child(2) span {
+    color: #92899f;
+    font-size: 10px;
+}
+
+.cartao-resumo strong {
+    font-family: 'Manrope', sans-serif;
+    font-size: 23px;
+}
+
+.cartao-resumo small {
+    color: #aaa2b6;
+    font-size: 10px;
+    line-height: 1.6;
+}
+
+.detalhe-cartao {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    color: #b4a4cf;
+    font-size: 14px;
+}
+
+/* ========================================
+   6. BOTÕES
+======================================== */
+
+.botao-salvar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    justify-self: start;
+    gap: 8px;
+    margin-top: 8px;
+    padding: 12px 17px;
+    border: none;
+    border-radius: 10px;
+    background: #7c3aed;
+    color: white;
+    font-size: 12px;
+    font-weight: 700;
+    transition: background 0.2s, transform 0.2s, box-shadow 0.2s;
+}
+
+.botao-salvar:hover:not(:disabled) {
+    background: #692acb;
+    box-shadow: 0 5px 14px #7541ce25;
+    transform: translateY(-1px);
+}
+
+.botao-salvar:disabled {
+    cursor: wait;
+    opacity: 0.65;
+}
+
+.cabecalho .botao-salvar {
+    flex-shrink: 0;
+    margin-top: 0;
+}
+
+.botao-secundario {
+    padding: 11px 14px;
+    border: 1px solid #e6d9fb;
+    border-radius: 9px;
+    background: #f5efff;
+    color: #7541ce;
+    font-size: 11px;
+    font-weight: 700;
+    transition: background 0.2s;
+}
+
+.botao-secundario:hover {
+    background: #ebe0ff;
+}
+
+.botao-acao {
+    display: grid;
+    place-items: center;
+    width: 34px;
+    height: 34px;
+    border: 1px solid #eee7f7;
+    border-radius: 9px;
+    background: #fff;
+    font-size: 19px;
+    transition: background 0.2s, border-color 0.2s;
+}
+
+.botao-acao.editar {
+    color: #7950bb;
+}
+
+.botao-acao.editar:hover {
+    border-color: #d9c5fa;
+    background: #f2eaff;
+}
+
+.botao-acao.excluir {
+    color: #d04e68;
+}
+
+.botao-acao.excluir:hover {
+    border-color: #f5c6cf;
+    background: #fff0f2;
+}
+
+.botao-acao:disabled {
+    cursor: wait;
+    opacity: 0.5;
+}
+
+.acoes-disciplina {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-left: auto;
+}
+
+/* ========================================
+   7. DISCIPLINAS E LISTAS
+======================================== */
+
+.lista-disciplinas {
+    display: grid;
+    gap: 12px;
+}
+
+.item-disciplina {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 15px 17px;
+    border: 1px solid #efebf5;
+    border-radius: 13px;
+    background: white;
+    transition: border-color 0.2s, transform 0.2s;
+}
+
+.item-disciplina:hover {
+    border-color: #d7c3f9;
+    transform: translateY(-1px);
+}
+
+.icone-disciplina {
+    display: grid;
+    place-items: center;
+    width: 42px;
+    height: 42px;
+    flex-shrink: 0;
+    border-radius: 12px;
+    color: white;
+    font-size: 19px;
+}
+
+.info-disciplina {
+    display: grid;
+    gap: 5px;
+    min-width: 0;
+}
+
+.info-disciplina strong {
+    font-size: 12px;
+}
+
+.info-disciplina span {
+    color: #9992a8;
+    font-size: 11px;
+}
+
+.seta-disciplina {
+    margin-left: auto;
+    color: #a99abd;
+    font-size: 19px;
+}
+
+/* ========================================
+   8. FORMULÁRIOS
+======================================== */
+
+.formulario-disciplina {
+    display: grid;
+    gap: 10px;
+    margin-bottom: 20px;
+    padding: 24px;
+    border: 1px solid #e8def8;
+    border-radius: 16px;
+    background: white;
+    box-shadow: 0 5px 20px #35234f05;
+}
+
+.formulario-disciplina h3 {
+    margin: 0;
+    color: #35234f;
+    font-family: 'Manrope', sans-serif;
+    font-size: 18px;
+}
+
+.formulario-disciplina > p {
+    margin: 0 0 8px;
+    color: #92899f;
+    font-size: 12px;
+    line-height: 1.6;
+}
+
+.formulario-disciplina label {
+    margin-top: 5px;
+    color: #5b506e;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.formulario-disciplina input,
+.formulario-disciplina textarea,
+.formulario-disciplina select {
+    width: 100%;
+    min-width: 0;
+    padding: 12px;
+    border: 1px solid #e6dfef;
+    border-radius: 9px;
+    outline: none;
+    background: white;
+    color: #35234f;
+    font: inherit;
+    font-size: 13px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.formulario-disciplina input:focus,
+.formulario-disciplina textarea:focus,
+.formulario-disciplina select:focus {
+    border-color: #9565df;
+    box-shadow: 0 0 0 3px #9565df20;
+}
+
+.formulario-disciplina textarea {
+    resize: vertical;
+    line-height: 1.6;
+}
+
+.formulario-disciplina input[type="color"] {
+    width: 44px;
+    height: 36px;
+    padding: 3px;
+    cursor: pointer;
+}
+
+.seletor-cor {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #81758f;
+    font-size: 12px;
+}
+
+.seletor-cor input[type="color"] {
+    width: 44px;
+    height: 36px;
+    padding: 3px;
+    border: 1px solid #e6dfef;
+    border-radius: 8px;
+    background: white;
+}
+
+/* ========================================
+   9. MENSAGENS
+======================================== */
+
+.mensagem-erro {
+    margin-top: 16px;
+    padding: 14px;
+    border: 1px solid #f5c6cf;
+    border-radius: 10px;
+    background: #fff0f2;
+    color: #c03955;
+    font-size: 12px;
+    line-height: 1.6;
+}
+
+.mensagem-sucesso {
+    margin-top: 16px;
+    padding: 13px 15px;
+    border: 1px solid #ccebd8;
+    border-radius: 10px;
+    background: #f0fbf4;
+    color: #287747;
+    font-size: 12px;
+}
+
+.mensagem-vazia {
+    margin-top: 20px;
+    padding: 24px;
+    border: 1px dashed #ded3ee;
+    border-radius: 13px;
+    background: white;
+    color: #92899f;
+    font-size: 12px;
+    line-height: 1.7;
+    text-align: center;
+}
+
+.mensagem-vazia p {
+    margin: 0 0 6px;
+    color: #5b506e;
+    font-weight: 600;
+}
+
+.mensagem-vazia small {
+    font-size: 11px;
+}
+
+/* ========================================
+   10. PÁGINA MINHAS TAREFAS
+======================================== */
+
+.resumo-tarefas {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    min-height: 105px;
+    padding: 24px;
+}
+
+.resumo-tarefas > div {
+    display: grid;
+    gap: 7px;
+    min-width: 0;
+}
+
+.resumo-tarefas strong {
+    color: #35234f;
+    font-size: 19px;
+}
+
+.resumo-tarefas small {
+    color: #92899f;
+    font-size: 12px;
+    line-height: 1.6;
+}
+
+.contador-tarefas {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    padding: 9px 13px;
+    border-radius: 9px;
+    background: #f1eaff;
+    color: #7541ce;
+    font-size: 12px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+/* Resumo dos estados */
+
+.resumo-estados {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 14px;
+    margin-top: 16px;
+}
+
+.mini-resumo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+    padding: 16px;
+    border: 1px solid #efebf5;
+    border-radius: 13px;
+    background: white;
+    color: #35234f;
+    text-align: left;
+    transition: border-color 0.2s, transform 0.2s, box-shadow 0.2s;
+}
+
+.mini-resumo:hover {
+    border-color: #d7c3f9;
+    box-shadow: 0 5px 18px #35234f08;
+    transform: translateY(-2px);
+}
+
+.mini-resumo > span:last-child {
+    display: grid;
+    gap: 4px;
+}
+
+.mini-resumo strong {
+    font-family: 'Manrope', sans-serif;
+    font-size: 21px;
+}
+
+.mini-resumo small {
+    color: #92899f;
+    font-size: 11px;
+}
+
+.mini-resumo-icone {
+    display: grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    flex-shrink: 0;
+    border-radius: 11px;
+    font-size: 21px;
+    font-weight: 700;
+}
+
+.mini-resumo-icone.pendente {
+    background: #fff3d8;
+    color: #d99a18;
+}
+
+.mini-resumo-icone.andamento {
+    background: #e2f5ff;
+    color: #299bc9;
+}
+
+.mini-resumo-icone.concluida {
+    background: #e2f8eb;
+    color: #319b60;
+}
+
+/* Cabeçalho da lista e filtros */
+
+.secao-lista-tarefas {
+    margin-top: 34px;
+}
+
+.filtros-tarefas {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 18px 0;
+}
+
+.filtro-tarefa {
+    padding: 10px 15px;
+    border: 1px solid #e8e0f2;
+    border-radius: 10px;
+    background: white;
+    color: #81758f;
+    font-size: 12px;
+    font-weight: 600;
+    transition: background 0.2s, color 0.2s, border-color 0.2s;
+}
+
+.filtro-tarefa:hover {
+    border-color: #cbb3f1;
+    color: #7541ce;
+}
+
+.filtro-tarefa.ativo {
+    border-color: #7541ce;
+    background: #7541ce;
+    color: white;
+}
+
+/* Cartões de tarefas clicáveis */
+
+.cartao-tarefa-interativo {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    width: 100%;
+    min-width: 0;
+    padding: 17px;
+    border: 1px solid #efebf5;
+    border-radius: 14px;
+    background: white;
+    color: #35234f;
+    text-align: left;
+    transition: border-color 0.2s, transform 0.2s, box-shadow 0.2s;
+}
+
+.cartao-tarefa-interativo:hover,
+.cartao-tarefa-interativo.selecionado {
+    border-color: #cbb3f1;
+    box-shadow: 0 5px 18px #35234f0a;
+    transform: translateY(-1px);
+}
+
+.icone-tarefa {
+    display: grid;
+    place-items: center;
+    width: 43px;
+    height: 43px;
+    flex-shrink: 0;
+    border-radius: 12px;
+    background: #f0e8ff;
+    color: #8955e8;
+    font-size: 21px;
+}
+
+.conteudo-cartao-tarefa {
+    display: grid;
+    flex: 1;
+    gap: 5px;
+    min-width: 0;
+}
+
+.conteudo-cartao-tarefa strong {
+    overflow-wrap: anywhere;
+    color: #35234f;
+    font-family: 'Manrope', sans-serif;
+    font-size: 13px;
+}
+
+.conteudo-cartao-tarefa small {
+    color: #92899f;
+    font-size: 11px;
+    line-height: 1.5;
+}
+
+.estado-tarefa {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: 0;
+    padding: 7px 10px;
+    border-radius: 8px;
+    font-size: 10px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.estado-pendente {
+    background: #fff3d8;
+    color: #b17b0c;
+}
+
+.estado-em-andamento {
+    background: #e2f5ff;
+    color: #2484ac;
+}
+
+.estado-concluida {
+    background: #e2f8eb;
+    color: #287747;
+}
+
+.seta-tarefa {
+    flex-shrink: 0;
+    color: #a99abd;
+    font-size: 22px;
+}
+
+/* Compatibilidade com cartões antigos de tarefa */
+
+.cartao-tarefa {
+    align-items: flex-start;
+    padding: 20px;
+    text-align: left;
+}
+
+.cartao-tarefa > div {
+    display: grid;
+    gap: 10px;
+    width: 100%;
+    min-width: 0;
+    text-align: left;
+}
+
+.cartao-tarefa h3 {
+    margin: 0 0 4px;
+    color: #35234f;
+    font-family: 'Manrope', sans-serif;
+    font-size: 16px;
+}
+
+.cartao-tarefa p {
+    margin: 0;
+    color: #817a92;
+    font-size: 12px;
+    line-height: 1.6;
+}
+
+.cartao-tarefa small {
+    display: block;
+    color: #92899f;
+    font-size: 11px;
+}
+
+/* ========================================
+   11. JANELA DE DETALHES ESTILO TRELLO
+======================================== */
+
+.sobreposicao-detalhes {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    overflow-y: auto;
+    background: rgba(35, 24, 53, 0.48);
+    backdrop-filter: blur(4px);
+    animation: aparecer-detalhes 0.18s ease-out;
+}
+
+.painel-detalhes-tarefa {
+    width: 100%;
+    max-width: 680px;
+    max-height: calc(100vh - 48px);
+    margin: auto;
+    padding: 30px;
+    overflow-y: auto;
+    border: 1px solid #eee7f7;
+    border-radius: 20px;
+    background: white;
+    box-shadow: 0 24px 80px rgba(35, 24, 53, 0.2);
+    animation: subir-detalhes 0.22s ease-out;
+}
+
+.cabecalho-detalhes-tarefa {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    padding-bottom: 22px;
+    border-bottom: 1px solid #f0ebf7;
+}
+
+.cabecalho-detalhes-tarefa > div {
+    min-width: 0;
+}
+
+.cabecalho-detalhes-tarefa h2 {
+    margin: 8px 0 0;
+    overflow-wrap: anywhere;
+    color: #35234f;
+    font-family: 'Manrope', sans-serif;
+    font-size: 25px;
+    line-height: 1.35;
+}
+
+.botao-fechar-detalhes {
+    display: grid;
+    place-items: center;
+    width: 36px;
+    height: 36px;
+    flex-shrink: 0;
+    border: 1px solid #eee7f7;
+    border-radius: 10px;
+    background: white;
+    color: #7950bb;
+    font-size: 24px;
+    transition: background 0.2s, border-color 0.2s;
+}
+
+.botao-fechar-detalhes:hover {
+    border-color: #d9c5fa;
+    background: #f2eaff;
+}
+
+.detalhes-disciplina {
+    display: flex;
+    align-items: center;
+    gap: 13px;
+    margin-top: 22px;
+    padding: 15px;
+    border: 1px solid #f0e9fb;
+    border-radius: 12px;
+    background: #faf7ff;
+}
+
+.detalhes-disciplina > div {
+    display: grid;
+    gap: 5px;
+    min-width: 0;
+}
+
+.detalhes-disciplina small {
+    color: #92899f;
+    font-size: 11px;
+}
+
+.detalhes-disciplina strong {
+    overflow-wrap: anywhere;
+    color: #35234f;
+    font-size: 13px;
+}
+
+.descricao-completa {
+    margin: 26px 0;
+}
+
+.descricao-completa h3 {
+    margin: 0 0 10px;
+    color: #35234f;
+    font-family: 'Manrope', sans-serif;
+    font-size: 15px;
+}
+
+.descricao-completa p {
+    margin: 0;
+    color: #81758f;
+    font-size: 13px;
+    line-height: 1.8;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+
+.grade-detalhes-tarefa {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+}
+
+.grade-detalhes-tarefa > div {
+    display: grid;
+    align-content: start;
+    gap: 7px;
+    min-width: 0;
+    padding: 15px;
+    border: 1px solid #f0ebf7;
+    border-radius: 11px;
+    background: #fcfbfe;
+}
+
+.grade-detalhes-tarefa small {
+    color: #9992a8;
+    font-size: 11px;
+}
+
+.grade-detalhes-tarefa strong {
+    overflow-wrap: anywhere;
+    color: #35234f;
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+.botao-fechar-final {
+    margin-top: 24px;
+}
+
+@keyframes aparecer-detalhes {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes subir-detalhes {
+    from {
+        opacity: 0;
+        transform: translateY(8px) scale(0.99);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* ========================================
+   12. RODAPÉ
+======================================== */
+
+.rodape {
+    margin-top: 35px;
+    padding: 20px 0;
+    border-top: 1px solid #ece8f2;
+    color: #a29aac;
+    font-size: 10px;
+    line-height: 1.7;
+}
+
+.rodape span {
+    color: #7950bb;
+    font-weight: 700;
+}
+
+/* ========================================
+   13. RESPONSIVIDADE
+======================================== */
+
+@media (max-width: 1100px) {
+    .menu-lateral {
+        width: 220px;
+        padding-right: 14px;
+        padding-left: 14px;
+    }
+
+    .conteudo {
+        width: calc(100% - 220px);
+        margin-left: 220px;
+        padding: 30px 28px;
+    }
+
+    .grade-resumo {
+        gap: 10px;
+    }
+
+    .cartao-resumo {
+        gap: 10px;
+    }
+
+    .ilustracao {
+        width: 165px;
+    }
+}
+
+@media (max-width: 850px) {
+    .conteudo {
+        padding-right: 22px;
+        padding-left: 22px;
+    }
+
+    .destaque {
+        padding: 28px;
+    }
+
+    .grade-resumo {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .resumo-estados {
+        gap: 10px;
+    }
+
+    .mini-resumo {
+        gap: 8px;
+        padding: 12px;
+    }
+
+    .mini-resumo-icone {
+        width: 35px;
+        height: 35px;
+    }
+
+    .estado-tarefa {
+        white-space: normal;
+        text-align: center;
+    }
+}
+
+@media (max-width: 760px) {
+    .menu-lateral {
+        position: static;
+        width: 100%;
+        padding: 14px 18px;
+        overflow: visible;
+        border-right: none;
+        border-bottom: 1px solid #eeeaf6;
+    }
+
+    .marca {
+        gap: 9px;
+        font-size: 19px;
+    }
+
+    .marca-imagem {
+        width: 48px;
+        height: 48px;
+    }
+
+    .menu-titulo,
+    .cartao-motivacao,
+    .perfil {
+        display: none;
+    }
+
+    .navegacao {
+        display: flex;
+        gap: 5px;
+        margin-top: 14px;
+        overflow-x: auto;
+        padding-bottom: 3px;
+    }
+
+    .link-menu {
+        flex-shrink: 0;
+        gap: 7px;
+        padding: 10px;
+        font-size: 11px;
+    }
+
+    .conteudo {
+        width: 100%;
+        margin-left: 0;
+        padding: 25px 18px;
+    }
+
+    .cabecalho {
+        align-items: flex-start;
+        flex-wrap: wrap;
+        gap: 18px;
+    }
+
+    .cabecalho h1 {
+        font-size: clamp(25px, 7vw, 32px);
+    }
+
+    .cabecalho .botao-salvar {
+        width: 100%;
+    }
+
+    .data-hoje {
+        display: none;
+    }
+
+    .destaque {
+        min-height: auto;
+        padding: 27px 24px;
+    }
+
+    .ilustracao {
+        position: absolute;
+        right: -60px;
+        bottom: -15px;
+        opacity: 0.35;
+    }
+
+    .destaque > div:first-child {
+        position: relative;
+        z-index: 1;
+    }
+
+    .grade-resumo {
+        grid-template-columns: 1fr;
+    }
+
+    .cartao-resumo {
+        padding: 16px;
+    }
+
+    .resumo-tarefas {
+        align-items: center;
+        padding: 18px;
+    }
+
+    .resumo-tarefas strong {
+        font-size: 17px;
+    }
+
+    .resumo-tarefas small {
+        font-size: 11px;
+    }
+
+    .contador-tarefas {
+        padding: 8px;
+        font-size: 10px;
+    }
+
+    .resumo-estados {
+        grid-template-columns: 1fr;
+        gap: 9px;
+    }
+
+    .mini-resumo {
+        padding: 13px;
+    }
+
+    .titulo-secao {
+        align-items: flex-start;
+    }
+
+    .titulo-secao h2 {
+        font-size: 16px;
+    }
+
+    .botao-secundario {
+        padding: 10px;
+        white-space: nowrap;
+    }
+
+    .filtros-tarefas {
+        gap: 7px;
+    }
+
+    .filtro-tarefa {
+        padding: 9px 11px;
+        font-size: 11px;
+    }
+
+    .cartao-tarefa-interativo {
+        flex-wrap: wrap;
+        gap: 10px;
+        padding: 13px;
+    }
+
+    .conteudo-cartao-tarefa {
+        flex-basis: calc(100% - 60px);
+    }
+
+    .estado-tarefa {
+        margin-left: 53px;
+    }
+
+    .seta-tarefa {
+        margin-left: auto;
+    }
+
+    .sobreposicao-detalhes {
+        align-items: flex-start;
+        padding: 12px;
+    }
+
+    .painel-detalhes-tarefa {
+        max-height: calc(100vh - 24px);
+        padding: 20px;
+        border-radius: 16px;
+    }
+
+    .cabecalho-detalhes-tarefa h2 {
+        font-size: 21px;
+    }
+
+    .grade-detalhes-tarefa {
+        grid-template-columns: 1fr;
+    }
+
+    .formulario-disciplina {
+        padding: 18px;
+    }
+
+    .rodape {
+        margin-top: 28px;
+    }
+}
+
+@media (max-width: 380px) {
+    .conteudo {
+        padding-right: 13px;
+        padding-left: 13px;
+    }
+
+    .resumo-tarefas {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .cartao-tarefa-interativo {
+        gap: 9px;
+    }
+
+    .estado-tarefa {
+        margin-left: 0;
+    }
+
+    .painel-detalhes-tarefa {
+        padding: 16px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        scroll-behavior: auto !important;
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+/* Ajustes finais da página Minhas tarefas */
+
+.resumo-tarefas {
+    justify-content: space-between;
+    text-align: left;
+}
+
+.resumo-tarefas > div {
+    justify-items: start;
+    text-align: left;
+}
+
+.resumo-tarefas strong {
+    font-size: 22px;
+    letter-spacing: -0.5px;
+}
+
+.secao-lista-tarefas {
+    justify-content: center;
+    text-align: center;
+}
+
+.secao-lista-tarefas > div {
+    width: 100%;
+    text-align: center;
+}
+
+.secao-lista-tarefas h2 {
+    font-family: 'Manrope', sans-serif;
+    font-size: 25px;
+    font-weight: 800;
+    letter-spacing: -0.7px;
+}
+
+.secao-lista-tarefas p {
+    margin-top: 9px;
+    font-size: 14px;
+    line-height: 1.7;
+}
+
+/* O X é o único botão de fechamento do modal */
+
+.botao-fechar-final {
+    display: none;
+}
+
+
+/* Ações disponíveis nos detalhes da tarefa */
+
+.acoes-tarefa {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 25px;
+    padding-top: 20px;
+    border-top: 1px solid #f0ebf7;
+}
+
+.botao-acao-tarefa {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    padding: 11px 14px;
+    border: 1px solid transparent;
+    border-radius: 10px;
+    font-size: 12px;
+    font-weight: 700;
+    transition: background 0.2s, border-color 0.2s, transform 0.2s;
+}
+
+.botao-acao-tarefa:hover {
+    transform: translateY(-1px);
+}
+
+.botao-acao-tarefa.editar {
+    border-color: #e4d6fa;
+    background: #f4edff;
+    color: #7541ce;
+}
+
+.botao-acao-tarefa.editar:hover {
+    background: #eaddff;
+}
+
+.botao-acao-tarefa.concluir {
+    border-color: #ccebd8;
+    background: #effaf3;
+    color: #287747;
+}
+
+.botao-acao-tarefa.concluir:hover {
+    background: #def5e6;
+}
+
+.botao-acao-tarefa.excluir {
+    border-color: #f5d4da;
+    background: #fff3f4;
+    color: #c03955;
+}
+
+.botao-acao-tarefa.excluir:hover {
+    background: #ffe5e9;
+}
+
+.botoes-formulario {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.botoes-formulario .botao-salvar {
+    margin-top: 0;
+}
+
+.botoes-formulario .botao-secundario {
+    padding: 12px 17px;
+}
+
+@media (max-width: 520px) {
+    .acoes-tarefa {
+        display: grid;
+        grid-template-columns: 1fr;
+    }
+
+    .botao-acao-tarefa {
+        width: 100%;
+    }
+}
+
+
+/* Cartões com ações rápidas */
+
+.cartao-tarefa-lista {
+    display: grid;
+    gap: 0;
+    padding: 7px 14px 12px;
+    border: 1px solid #efebf5;
+    border-radius: 15px;
+    background: #fff;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.cartao-tarefa-lista:hover,
+.cartao-tarefa-lista.selecionado {
+    border-color: #cbb3f1;
+    box-shadow: 0 5px 18px #35234f08;
+}
+
+.cartao-tarefa-lista .cartao-tarefa-interativo {
+    border: none;
+    box-shadow: none;
+    transform: none;
+}
+
+.acoes-cartao-lista {
+    display: flex;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 0 4px 3px 57px;
+}
+
+.acao-lista {
+    padding: 7px 11px;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    background: #fff;
+    font-size: 11px;
+    font-weight: 700;
+    transition: background 0.2s, border-color 0.2s;
+}
+
+.acao-lista.concluir {
+    border-color: #ccebd8;
+    background: #f0fbf4;
+    color: #287747;
+}
+
+.acao-lista.concluir:hover {
+    background: #def5e6;
+}
+
+.acao-lista.excluir {
+    border-color: #f5d4da;
+    background: #fff3f4;
+    color: #c03955;
+}
+
+.acao-lista.excluir:hover {
+    background: #ffe5e9;
+}
+
+@media (max-width: 520px) {
+    .cartao-tarefa-lista {
+        padding: 7px 9px 11px;
+    }
+
+    .acoes-cartao-lista {
+        padding-left: 0;
+    }
+
+    .acoes-cartao-lista .acao-lista {
+        flex: 1;
+    }
+}
+
+
+/* ===== Painel de detalhes: ações centralizadas ===== */
+
+.painel-detalhes-tarefa .acoes-tarefa {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    width: 100%;
+    margin-top: 28px;
+    padding-top: 24px;
+    border-top: 1px solid #eee7f7;
+}
+
+.painel-detalhes-tarefa .botao-acao-tarefa {
+    min-height: 46px;
+    padding: 12px 20px;
+    border-radius: 12px;
+    font-size: 13px;
+}
+
+/* ===== Cartões da lista: organização e espaçamento ===== */
+
+.cartao-tarefa-lista {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    padding: 10px 16px 12px;
+    overflow: hidden;
+    border: 1px solid #eee8f6;
+    border-radius: 16px;
+    background: #fff;
+    transition:
+        border-color 0.2s ease,
+        box-shadow 0.2s ease,
+        transform 0.2s ease;
+}
+
+.cartao-tarefa-lista:hover {
+    border-color: #d8c5fb;
+    box-shadow: 0 5px 18px rgba(87, 53, 135, 0.06);
+    transform: translateY(-1px);
+}
+
+.cartao-tarefa-lista .cartao-tarefa-interativo {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    width: 100%;
+    min-width: 0;
+    padding: 10px 4px 14px;
+    border: none;
+    border-radius: 10px;
+    background: transparent;
+    text-align: left;
+    box-shadow: none;
+    transform: none;
+}
+
+.cartao-tarefa-lista .cartao-tarefa-interativo:hover {
+    background: #fcfaff;
+}
+
+.cartao-tarefa-lista .icone-tarefa {
+    display: flex;
+    flex: 0 0 52px;
+    align-items: center;
+    justify-content: center;
+    width: 52px;
+    height: 52px;
+    border-radius: 15px;
+    background: #f1e8ff;
+    color: #8549e8;
+    font-size: 21px;
+}
+
+.cartao-tarefa-lista .conteudo-cartao-tarefa {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+}
+
+.cartao-tarefa-lista .conteudo-cartao-tarefa strong {
+    overflow: hidden;
+    color: #261447;
+    font-size: 15px;
+    font-weight: 750;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.cartao-tarefa-lista .conteudo-cartao-tarefa small {
+    color: #9186a5;
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+.cartao-tarefa-lista .estado-tarefa {
+    flex-shrink: 0;
+    padding: 10px 13px;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.cartao-tarefa-lista .seta-tarefa {
+    flex-shrink: 0;
+    margin: 0 3px;
+    color: #a18abf;
+    font-size: 23px;
+}
+
+/* Ações rápidas alinhadas à direita, em uma linha própria */
+
+.cartao-tarefa-lista .acoes-cartao-lista {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-left: 68px;
+    padding: 10px 4px 2px;
+    border-top: 1px solid #f3eef8;
+}
+
+.cartao-tarefa-lista .acao-lista {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 36px;
+    padding: 8px 13px;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 700;
+    cursor: pointer;
+    transition:
+        background 0.2s ease,
+        transform 0.2s ease;
+}
+
+.cartao-tarefa-lista .acao-lista:hover {
+    transform: translateY(-1px);
+}
+
+.cartao-tarefa-lista .acao-lista.concluir {
+    border: 1px solid #ccebd8;
+    background: #f0faf4;
+    color: #287747;
+}
+
+.cartao-tarefa-lista .acao-lista.excluir {
+    border: 1px solid #f5d4da;
+    background: #fff4f5;
+    color: #c03955;
+}
+
+/* Ajustes para telas menores */
+
+@media (max-width: 600px) {
+    .painel-detalhes-tarefa .acoes-tarefa {
+        display: grid;
+        grid-template-columns: 1fr;
+    }
+
+    .painel-detalhes-tarefa .botao-acao-tarefa {
+        width: 100%;
+    }
+
+    .cartao-tarefa-lista {
+        padding: 8px 10px 10px;
+    }
+
+    .cartao-tarefa-lista .cartao-tarefa-interativo {
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+
+    .cartao-tarefa-lista .icone-tarefa {
+        flex-basis: 44px;
+        width: 44px;
+        height: 44px;
+    }
+
+    .cartao-tarefa-lista .conteudo-cartao-tarefa {
+        flex-basis: calc(100% - 70px);
+    }
+
+    .cartao-tarefa-lista .estado-tarefa {
+        margin-left: 54px;
+    }
+
+    .cartao-tarefa-lista .acoes-cartao-lista {
+        justify-content: center;
+        margin-left: 0;
+    }
+
+    .cartao-tarefa-lista .acao-lista {
+        flex: 1;
+    }
+
+    
+/* Status e ações compactas na mesma linha */
+
+.acoes-status-tarefa {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 9px;
+    flex-shrink: 0;
+    margin-left: auto;
+}
+
+.acoes-status-tarefa .estado-tarefa {
+    margin: 0;
+}
+
+.icone-acao-tarefa {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    padding: 0;
+    border: 1px solid transparent;
+    border-radius: 10px;
+    font-size: 19px;
+    font-weight: 700;
+    cursor: pointer;
+    transition:
+        background 0.2s ease,
+        transform 0.2s ease;
+}
+
+.icone-acao-tarefa:hover {
+    transform: translateY(-1px);
+}
+
+.icone-acao-tarefa.concluir {
+    color: #21834b;
+    background: #effaf3;
+    border-color: #ccebd8;
+}
+
+.icone-acao-tarefa.concluir:hover {
+    background: #def5e6;
+}
+
+.icone-acao-tarefa.excluir {
+    color: #c03955;
+    background: #fff3f4;
+    border-color: #f5d4da;
+}
+
+.icone-acao-tarefa.excluir:hover {
+    background: #ffe5e9;
+}
+
+@media (max-width: 600px) {
+    .acoes-status-tarefa {
+        gap: 5px;
+    }
+
+    .icone-acao-tarefa {
+        width: 30px;
+        height: 30px;
+    }
+
+    .acoes-status-tarefa .estado-tarefa {
+        padding: 8px;
+        font-size: 10px;
+    }
+}
+
+}
