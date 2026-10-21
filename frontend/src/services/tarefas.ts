@@ -8,7 +8,7 @@ export interface Tarefa {
     dificuldade: number;
     duracaoEstimada: number;
     pesoAvaliacao: number;
-    estado: "pendente" | "em andamento" | "concluida";
+    estado: "pendente" | "concluida";
     tempoEstudado: number;
 }
 
@@ -96,6 +96,17 @@ export async function editarTarefa(
 export async function concluirTarefa(id: string): Promise<void> {
     const resposta = await fetch(
         `${ENDERECO_API}/${encodeURIComponent(id)}/concluir`,
+        {
+            method: "PATCH"
+        }
+    );
+
+    await verificarResposta(resposta);
+}
+
+export async function reabrirTarefa(id: string): Promise<void> {
+    const resposta = await fetch(
+        `${ENDERECO_API}/${encodeURIComponent(id)}/reabrir`,
         {
             method: "PATCH"
         }

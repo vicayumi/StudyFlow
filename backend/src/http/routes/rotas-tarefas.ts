@@ -9,6 +9,7 @@ rotas.get("/", controlador.listar);
 rotas.post("/", controlador.criar);
 rotas.put("/:id", controlador.editar);
 rotas.patch("/:id/concluir", controlador.concluir);
+rotas.patch("/:id/reabrir", controlador.reabrir);
 rotas.delete("/:id", controlador.excluir);
 
 export default rotas;

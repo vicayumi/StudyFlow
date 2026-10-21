@@ -257,6 +257,39 @@ export class ControladorTarefas {
         }
     };
 
+    public reabrir = async (
+        requisicao: Request,
+        resposta: Response
+    ): Promise<void> => {
+        try {
+            const id = this.obterId(requisicao);
+
+            if (!id) {
+                resposta.status(400).json({
+                    erro: "O identificador da tarefa é inválido."
+                });
+                return;
+            }
+
+            const reaberta = await this.repositorioTarefas.reabrir(id);
+
+            if (!reaberta) {
+                resposta.status(404).json({
+                    erro: "Tarefa não encontrada."
+                });
+                return;
+            }
+
+            resposta.json({
+                mensagem: "Tarefa reaberta com sucesso."
+            });
+        } catch {
+            resposta.status(500).json({
+                erro: "Erro ao reabrir tarefa."
+            });
+        }
+    };
+
     public excluir = async (
         requisicao: Request,
         resposta: Response

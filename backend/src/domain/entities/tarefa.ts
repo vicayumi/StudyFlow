@@ -1,6 +1,5 @@
 export type EstadoTarefa =
     | "pendente"
-    | "em andamento"
     | "concluida";
 
 export class Tarefa {
@@ -81,16 +80,6 @@ export class Tarefa {
         );
     }
 
-    public iniciar(): void {
-        if (this.estado !== "pendente") {
-            throw new Error(
-                "Somente tarefas pendentes podem ser iniciadas."
-            );
-        }
-
-        this.estado = "em andamento";
-    }
-
     public registrarTempoEstudado(minutos: number): void {
         if (this.estado === "concluida") {
             throw new Error(
@@ -111,10 +100,6 @@ export class Tarefa {
         }
 
         this.tempoEstudado += minutos;
-
-        if (this.estado === "pendente") {
-            this.estado = "em andamento";
-        }
     }
 
     public concluir(): void {
@@ -123,6 +108,14 @@ export class Tarefa {
         }
 
         this.estado = "concluida";
+    }
+
+    public reabrir(): void {
+        if (this.estado !== "concluida") {
+            throw new Error("Somente tarefas concluídas podem ser reabertas.");
+        }
+
+        this.estado = "pendente";
     }
 
     public atualizarDificuldade(novaDificuldade: number): void {

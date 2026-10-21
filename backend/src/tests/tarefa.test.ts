@@ -20,14 +20,6 @@ describe("Classe Tarefa", () => {
         expect(tarefa.obterEstado()).toBe("pendente");
     });
 
-    it("deve iniciar uma tarefa pendente", () => {
-        const tarefa = criarTarefa();
-
-        tarefa.iniciar();
-
-        expect(tarefa.obterEstado()).toBe("em andamento");
-    });
-
     it("deve concluir uma tarefa", () => {
         const tarefa = criarTarefa();
 
@@ -59,30 +51,21 @@ describe("Classe Tarefa", () => {
         );
     });
 
-    it("não deve permitir iniciar uma tarefa já iniciada", () => {
+    it("deve calcular o tempo restante", () => {
         const tarefa = criarTarefa();
 
-        tarefa.iniciar();
+        tarefa.registrarTempoEstudado(45);
 
-        expect(() => tarefa.iniciar()).toThrow(
-            "Somente tarefas pendentes podem ser iniciadas."
-        );
-    });
-    it("deve calcular o tempo restante", () => {
-    const tarefa = criarTarefa();
-
-    tarefa.registrarTempoEstudado(45);
-
-    expect(tarefa.obterTempoEstudado()).toBe(45);
-    expect(tarefa.obterTempoRestante()).toBe(75);
+        expect(tarefa.obterTempoEstudado()).toBe(45);
+        expect(tarefa.obterTempoRestante()).toBe(75);
     });
 
-    it("deve iniciar a tarefa ao registrar estudo", () => {
+    it("deve manter a tarefa pendente ao registrar tempo estudado", () => {
         const tarefa = criarTarefa();
 
         tarefa.registrarTempoEstudado(30);
 
-        expect(tarefa.obterEstado()).toBe("em andamento");
+        expect(tarefa.obterEstado()).toBe("pendente");
     });
 
     it("não deve permitir registrar mais tempo que o restante", () => {

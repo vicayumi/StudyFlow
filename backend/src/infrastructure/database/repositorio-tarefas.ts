@@ -13,7 +13,7 @@ interface TarefaBanco extends RowDataPacket {
     duracao_estimada: number;
     tempo_estudado: number;
     peso_avaliacao: number;
-    estado: EstadoTarefa;
+    estado: string;
 }
 
 export interface DadosNovaTarefa {
@@ -67,13 +67,11 @@ export class RepositorioTarefas {
             tarefa.registrarTempoEstudado(linha.tempo_estudado);
         }
 
-        if (linha.estado === "concluida") {
+        const estado: EstadoTarefa =
+            linha.estado === "concluida" ? "concluida" : "pendente";
+
+        if (estado === "concluida") {
             tarefa.concluir();
-        } else if (
-            linha.estado === "em andamento" &&
-            linha.tempo_estudado === 0
-        ) {
-            tarefa.iniciar();
         }
 
         return {
@@ -86,7 +84,7 @@ export class RepositorioTarefas {
             duracaoEstimada: tarefa.duracaoEstimada,
             tempoEstudado: tarefa.obterTempoEstudado(),
             pesoAvaliacao: tarefa.pesoAvaliacao,
-            estado: tarefa.obterEstado()
+            estado
         };
     }
 
@@ -177,7 +175,16 @@ export class RepositorioTarefas {
             ]
         );
 
-        return resultado.affectedRows > 0;
+        if (resultado.affectedRows > 0) {
+            return true;
+        }
+
+        const [tarefasEncontradas] = await conexao.execute<RowDataPacket[]>(
+            "SELECT id FROM tarefas WHERE id = ?",
+            [id]
+        );
+
+        return tarefasEncontradas.length > 0;
     }
 
     public async concluir(id: string): Promise<boolean> {
@@ -195,6 +202,26 @@ export class RepositorioTarefas {
         const [linhas] = await conexao.execute<TarefaBanco[]>(
             `SELECT id FROM tarefas
             WHERE id = ? AND estado = 'concluida'`,
+            [id]
+        );
+
+        return linhas.length > 0;
+    }
+
+    public async reabrir(id: string): Promise<boolean> {
+        const [resultado] = await conexao.execute<ResultSetHeader>(
+            `UPDATE tarefas
+             SET estado = 'pendente'
+             WHERE id = ? AND estado <> 'pendente'`,
+            [id]
+        );
+
+        if (resultado.affectedRows > 0) {
+            return true;
+        }
+
+        const [linhas] = await conexao.execute<TarefaBanco[]>(
+            "SELECT id FROM tarefas WHERE id = ?",
             [id]
         );
 

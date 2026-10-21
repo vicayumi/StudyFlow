@@ -5,6 +5,7 @@ import {
     criarTarefa,
     editarTarefa,
     concluirTarefa,
+    reabrirTarefa as reabrirTarefaApi,
     excluirTarefa,
     type Tarefa,
     type DadosNovaTarefa
@@ -17,7 +18,6 @@ import {
 type FiltroTarefa =
     | "todas"
     | "pendente"
-    | "em andamento"
     | "concluida";
 
 function MinhasTarefas() {
@@ -82,6 +82,18 @@ function MinhasTarefas() {
     useEffect(() => {
         carregarDados();
     }, []);
+
+    useEffect(() => {
+        if (!sucesso) {
+            return;
+        }
+
+        const temporizador = window.setTimeout(() => {
+            setSucesso("");
+        }, 4000);
+
+        return () => window.clearTimeout(temporizador);
+    }, [sucesso]);
 
     function formularioVazio(): DadosNovaTarefa {
         return {
@@ -155,10 +167,8 @@ function MinhasTarefas() {
         try {
             if (modoEdicao && tarefaSelecionada) {
                 await editarTarefa(tarefaSelecionada.id, formulario);
-                setSucesso("Tarefa atualizada com sucesso!");
             } else {
                 await criarTarefa(formulario);
-                setSucesso("Tarefa cadastrada com sucesso!");
                 setFiltro("todas");
             }
 
@@ -181,21 +191,13 @@ function MinhasTarefas() {
             return;
         }
 
-        const confirmar = window.confirm(
-            `Deseja marcar "${tarefa.titulo}" como concluída?`
-        );
-
-        if (!confirmar) {
-            return;
-        }
-
         setErro("");
         setSucesso("");
 
         try {
             await concluirTarefa(tarefa.id);
-            setSucesso("Tarefa concluída com sucesso!");
             await carregarDados();
+            setSucesso("Tarefa concluída com sucesso!");
         } catch (erro) {
             setErro(
                 erro instanceof Error
@@ -205,15 +207,26 @@ function MinhasTarefas() {
         }
     }
 
-    async function removerTarefa(tarefa: Tarefa) {
-        const confirmar = window.confirm(
-            `Tem certeza de que deseja excluir "${tarefa.titulo}"? Esta ação não pode ser desfeita.`
-        );
+    async function reabrirTarefa(tarefa: Tarefa) {
+        setErro("");
+        setSucesso("");
 
-        if (!confirmar) {
-            return;
+        try {
+            await reabrirTarefaApi(tarefa.id);
+            setTarefaSelecionada(null);
+            setFiltro("pendente");
+            await carregarDados();
+            setSucesso("Tarefa reaberta com sucesso!");
+        } catch (erro) {
+            setErro(
+                erro instanceof Error
+                    ? erro.message
+                    : "Não foi possível reabrir a tarefa."
+            );
         }
+    }
 
+    async function removerTarefa(tarefa: Tarefa) {
         setErro("");
         setSucesso("");
 
@@ -222,8 +235,8 @@ function MinhasTarefas() {
             setTarefaSelecionada(null);
             setMostrarFormulario(false);
             setModoEdicao(false);
-            setSucesso("Tarefa excluída com sucesso!");
             await carregarDados();
+            setSucesso("Tarefa excluída com sucesso!");
         } catch (erro) {
             setErro(
                 erro instanceof Error
@@ -260,8 +273,6 @@ function MinhasTarefas() {
         switch (estado) {
             case "pendente":
                 return "Pendente";
-            case "em andamento":
-                return "Em andamento";
             case "concluida":
                 return "Concluída";
         }
@@ -309,13 +320,12 @@ function MinhasTarefas() {
         (tarefa) => tarefa.estado === "pendente"
     ).length;
 
-    const quantidadeEmAndamento = tarefas.filter(
-        (tarefa) => tarefa.estado === "em andamento"
-    ).length;
-
     const quantidadeConcluidas = tarefas.filter(
         (tarefa) => tarefa.estado === "concluida"
     ).length;
+    const progressoConclusao = tarefas.length === 0
+        ? 0
+        : Math.round((quantidadeConcluidas / tarefas.length) * 100);
 
     return (
         <section className="secao-disciplinas">
@@ -330,26 +340,30 @@ function MinhasTarefas() {
                     </p>
                 </div>
 
-                <button
-                    className="botao-salvar"
-                    type="button"
-                    onClick={abrirCadastro}
-                >
-                    + Nova tarefa
-                </button>
             </header>
 
-            <div className="resumo-tarefas cartao-resumo">
+            <div className="resumo-tarefas resumo-progresso cartao-resumo">
                 <div>
-                    <strong>Suas atividades</strong>
+                    <strong>Seu progresso</strong>
                     <small>
-                        Organize seus prazos e acompanhe seu progresso.
+                        {quantidadeConcluidas} de {tarefas.length}{" "}
+                        {tarefas.length === 1 ? "tarefa concluída" : "tarefas concluídas"}
                     </small>
                 </div>
 
+                <span
+                    className="barra-progresso-tarefas"
+                    role="progressbar"
+                    aria-label="Progresso de conclusão das tarefas"
+                    aria-valuemin={0}
+                    aria-valuemax={100}
+                    aria-valuenow={progressoConclusao}
+                >
+                    <span style={{ width: `${progressoConclusao}%` }} />
+                </span>
+
                 <span className="contador-tarefas">
-                    {tarefas.length}{" "}
-                    {tarefas.length === 1 ? "tarefa" : "tarefas"}
+                    {progressoConclusao}%
                 </span>
             </div>
 
@@ -359,22 +373,10 @@ function MinhasTarefas() {
                     className="mini-resumo"
                     onClick={() => setFiltro("pendente")}
                 >
-                    <span className="mini-resumo-icone pendente">○</span>
+                    <span className="mini-resumo-icone pendente">◷</span>
                     <span>
                         <strong>{quantidadePendentes}</strong>
                         <small>Pendentes</small>
-                    </span>
-                </button>
-
-                <button
-                    type="button"
-                    className="mini-resumo"
-                    onClick={() => setFiltro("em andamento")}
-                >
-                    <span className="mini-resumo-icone andamento">◷</span>
-                    <span>
-                        <strong>{quantidadeEmAndamento}</strong>
-                        <small>Em andamento</small>
                     </span>
                 </button>
 
@@ -552,7 +554,9 @@ function MinhasTarefas() {
             )}
 
             {sucesso && (
-                <p className="mensagem-sucesso">{sucesso}</p>
+                <p className="aviso-conclusao" role="status" aria-live="polite">
+                    {sucesso}
+                </p>
             )}
 
             {erro && !mostrarFormulario && (
@@ -569,10 +573,9 @@ function MinhasTarefas() {
             <div className="filtros-tarefas">
                 {(
                     [
-                        ["todas", "Todas"],
                         ["pendente", "Pendentes"],
-                        ["em andamento", "Em andamento"],
-                        ["concluida", "Concluídas"]
+                        ["concluida", "Concluídas"],
+                        ["todas", "Todas"]
                     ] as [FiltroTarefa, string][]
                 ).map(([valor, rotulo]) => (
                     <button
@@ -586,6 +589,14 @@ function MinhasTarefas() {
                         {rotulo}
                     </button>
                 ))}
+
+                <button
+                    className="botao-salvar botao-nova-tarefa-filtros"
+                    type="button"
+                    onClick={abrirCadastro}
+                >
+                    + Nova tarefa
+                </button>
             </div>
 
             {carregando && (
@@ -611,14 +622,22 @@ function MinhasTarefas() {
             {!carregando && tarefasFiltradas.length > 0 && (
                 <div className="lista-disciplinas">
                     {tarefasFiltradas.map((tarefa) => (
-                        <article
-                            className={`cartao-tarefa-lista ${
-                                tarefaSelecionada?.id === tarefa.id
-                                    ? "selecionado"
-                                    : ""
-                            }`}
-                            key={tarefa.id}
+                    <article
+                        className={`cartao-tarefa-lista ${
+                            tarefaSelecionada?.id === tarefa.id ? "selecionado" : ""
+                        }`}
+                        key={tarefa.id}
+                    >
+                        <span
+                            className={`estado-tarefa estado-${tarefa.estado.replace(
+                                " ",
+                                "-"
+                            )}`}
                         >
+                            {nomeEstado(tarefa.estado)}
+                        </span>
+
+                        <div className="cartao-tarefa-linha">
                             <button
                                 className="cartao-tarefa-interativo"
                                 type="button"
@@ -636,36 +655,31 @@ function MinhasTarefas() {
 
                                 <span className="conteudo-cartao-tarefa">
                                     <strong>{tarefa.titulo}</strong>
-                                    <small>
-                                        {nomeDisciplina(tarefa.disciplinaId)}
-                                    </small>
-                                    <small>
-                                        Prazo: {formatarPrazo(tarefa.dataPrazo)}
-                                    </small>
+                                    <small>{nomeDisciplina(tarefa.disciplinaId)}</small>
+                                    <small>Prazo: {formatarPrazo(tarefa.dataPrazo)}</small>
                                 </span>
+                            </button>
 
-                                <span className="acoes-status-tarefa">
-                                <span
-                                    className={`estado-tarefa estado-${tarefa.estado.replace(
-                                        " ",
-                                        "-"
-                                    )}`}
-                                >
-                                    {nomeEstado(tarefa.estado)}
-                                </span>
-
-                                {tarefa.estado !== "concluida" && (
+                            <div className="acoes-status-tarefa">
+                                {tarefa.estado !== "concluida" ? (
                                     <button
                                         type="button"
                                         className="icone-acao-tarefa concluir"
                                         title="Concluir tarefa"
                                         aria-label={`Concluir ${tarefa.titulo}`}
-                                        onClick={(evento) => {
-                                            evento.stopPropagation();
-                                            marcarComoConcluida(tarefa);
-                                        }}
+                                        onClick={() => marcarComoConcluida(tarefa)}
                                     >
                                         ✓
+                                    </button>
+                                ) : (
+                                    <button
+                                        type="button"
+                                        className="icone-acao-tarefa reabrir"
+                                        title="Reabrir tarefa"
+                                        aria-label={`Reabrir ${tarefa.titulo}`}
+                                        onClick={() => reabrirTarefa(tarefa)}
+                                    >
+                                        ↶
                                     </button>
                                 )}
 
@@ -674,21 +688,26 @@ function MinhasTarefas() {
                                     className="icone-acao-tarefa excluir"
                                     title="Excluir tarefa"
                                     aria-label={`Excluir ${tarefa.titulo}`}
-                                    onClick={(evento) => {
-                                        evento.stopPropagation();
-                                        removerTarefa(tarefa);
-                                    }}
+                                    onClick={() => removerTarefa(tarefa)}
                                 >
                                     ×
                                 </button>
 
-                                <span className="seta-tarefa">›</span>
-                            </span>
-
-                                <span className="seta-tarefa">›</span>
-                            </button>
-
-                        </article>
+                                <button
+                                    type="button"
+                                    className="seta-tarefa"
+                                    aria-label={`Ver detalhes de ${tarefa.titulo}`}
+                                    onClick={() => {
+                                        setTarefaSelecionada(tarefa);
+                                        setMostrarFormulario(false);
+                                        setModoEdicao(false);
+                                    }}
+                                >
+                                    ›
+                                </button>
+                            </div>
+                        </div>
+                    </article>
                     ))}
                 </div>
             )}
@@ -800,7 +819,7 @@ function MinhasTarefas() {
                                 ✎ Editar
                             </button>
 
-                            {tarefaSelecionada.estado !== "concluida" && (
+                            {tarefaSelecionada.estado !== "concluida" ? (
                                 <button
                                     type="button"
                                     className="botao-acao-tarefa concluir"
@@ -809,6 +828,14 @@ function MinhasTarefas() {
                                     }
                                 >
                                     ✓ Concluir tarefa
+                                </button>
+                            ) : (
+                                <button
+                                    type="button"
+                                    className="botao-acao-tarefa reabrir"
+                                    onClick={() => reabrirTarefa(tarefaSelecionada)}
+                                >
+                                    ↶ Reabrir tarefa
                                 </button>
                             )}
 
