@@ -10,9 +10,10 @@ interface DisciplinaBanco extends RowDataPacket {
 }
 
 export class RepositorioDisciplinas {
-    public async listar(): Promise<Disciplina[]> {
+    public async listar(usuarioId: string): Promise<Disciplina[]> {
         const [linhas] = await conexao.query<DisciplinaBanco[]>(
-            "SELECT id, nome, cor FROM disciplinas ORDER BY nome"
+            "SELECT id, nome, cor FROM disciplinas WHERE usuario_id = ? ORDER BY nome",
+            [usuarioId]
         );
 
         return linhas.map(
@@ -20,10 +21,10 @@ export class RepositorioDisciplinas {
         );
     }
 
-    public async buscarPorId(id: string): Promise<Disciplina | null> {
+    public async buscarPorId(id: string, usuarioId: string): Promise<Disciplina | null> {
         const [linhas] = await conexao.execute<DisciplinaBanco[]>(
-            "SELECT id, nome, cor FROM disciplinas WHERE id = ?",
-            [id]
+            "SELECT id, nome, cor FROM disciplinas WHERE id = ? AND usuario_id = ?",
+            [id, usuarioId]
         );
 
         if (linhas.length === 0) {
@@ -37,6 +38,7 @@ export class RepositorioDisciplinas {
 
     public async criar(
         nome: string,
+        usuarioId: string,
         cor: string = "#8B5CF6"
     ): Promise<Disciplina> {
         const disciplina = new Disciplina(
@@ -46,26 +48,27 @@ export class RepositorioDisciplinas {
         );
 
         await conexao.execute<ResultSetHeader>(
-            "INSERT INTO disciplinas (id, nome, cor) VALUES (?, ?, ?)",
-            [disciplina.id, disciplina.nome, disciplina.cor]
+            "INSERT INTO disciplinas (id, usuario_id, nome, cor) VALUES (?, ?, ?, ?)",
+            [disciplina.id, usuarioId, disciplina.nome, disciplina.cor]
         );
 
         return disciplina;
     }
 
-    public async excluir(id: string): Promise<boolean> {
+    public async excluir(id: string, usuarioId: string): Promise<boolean> {
         const [resultado] = await conexao.execute<ResultSetHeader>(
-            "DELETE FROM disciplinas WHERE id = ?",
-            [id]
+            "DELETE FROM disciplinas WHERE id = ? AND usuario_id = ?",
+            [id, usuarioId]
         );
 
         return resultado.affectedRows > 0;
     }
     public async atualizar(
     id: string,
-    dados: { nome?: string; cor?: string }
+    dados: { nome?: string; cor?: string },
+    usuarioId: string
 ): Promise<Disciplina | null> {
-    const disciplina = await this.buscarPorId(id);
+    const disciplina = await this.buscarPorId(id, usuarioId);
 
     if (!disciplina) {
         return null;
@@ -80,8 +83,8 @@ export class RepositorioDisciplinas {
     }
 
     await conexao.execute(
-        "UPDATE disciplinas SET nome = ?, cor = ? WHERE id = ?",
-        [disciplina.nome, disciplina.cor, id]
+        "UPDATE disciplinas SET nome = ?, cor = ? WHERE id = ? AND usuario_id = ?",
+        [disciplina.nome, disciplina.cor, id, usuarioId]
     );
 
     return disciplina;

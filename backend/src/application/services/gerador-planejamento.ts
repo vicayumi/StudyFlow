@@ -10,6 +10,11 @@ export interface HorarioDisponivel {
 export interface ResultadoPlanejamento {
     sessoes: SessaoEstudo[];
     tarefasSemTempo: string[];
+    prioridades: {
+        tarefaId: string;
+        prioridade: number;
+        explicacao: string;
+    }[];
 }
 
 export class GeradorPlanejamento {
@@ -53,6 +58,11 @@ export class GeradorPlanejamento {
                     this.estrategia.calcularPrioridade(b, dataAtual) -
                     this.estrategia.calcularPrioridade(a, dataAtual)
             );
+        const prioridades = tarefasOrdenadas.map((tarefa) => ({
+            tarefaId: tarefa.id,
+            prioridade: this.estrategia.calcularPrioridade(tarefa, dataAtual),
+            explicacao: this.estrategia.explicarPrioridade(tarefa, dataAtual)
+        })).sort((a, b) => b.prioridade - a.prioridade);
 
         let contadorSessoes = 0;
 
@@ -120,6 +130,6 @@ export class GeradorPlanejamento {
             }
         }
 
-        return { sessoes, tarefasSemTempo };
+        return { sessoes, tarefasSemTempo, prioridades };
     }
 }

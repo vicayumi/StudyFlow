@@ -1,3 +1,4 @@
+import { requisicaoApi } from "./api";
 
 export interface Tarefa {
     id: string;
@@ -24,104 +25,51 @@ export interface DadosNovaTarefa {
 
 export type DadosEdicaoTarefa = DadosNovaTarefa;
 
-const ENDERECO_API = "http://localhost:3000/api/tarefas";
+const CABECALHOS_JSON = {
+    "Content-Type": "application/json"
+};
 
-async function verificarResposta(resposta: Response): Promise<void> {
-    if (resposta.ok) {
-        return;
-    }
-
-    let mensagem = "Não foi possível realizar a operação.";
-
-    try {
-        const resultado: unknown = await resposta.json();
-
-        if (
-            typeof resultado === "object" &&
-            resultado !== null &&
-            "erro" in resultado &&
-            typeof resultado.erro === "string"
-        ) {
-            mensagem = resultado.erro;
-        }
-    } catch {
-        // Mantém a mensagem padrão se a resposta não tiver JSON.
-    }
-
-    throw new Error(mensagem);
+export function listarTarefas(): Promise<Tarefa[]> {
+    return requisicaoApi<Tarefa[]>("/tarefas");
 }
 
-export async function listarTarefas(): Promise<Tarefa[]> {
-    const resposta = await fetch(ENDERECO_API);
-
-    await verificarResposta(resposta);
-
-    return resposta.json() as Promise<Tarefa[]>;
-}
-
-export async function criarTarefa(
+export function criarTarefa(
     dados: DadosNovaTarefa
 ): Promise<Tarefa> {
-    const resposta = await fetch(ENDERECO_API, {
+    return requisicaoApi<Tarefa>("/tarefas", {
         method: "POST",
-        headers: {
-            "Content-Type": "application/json"
-        },
+        headers: CABECALHOS_JSON,
         body: JSON.stringify(dados)
     });
-
-    await verificarResposta(resposta);
-
-    return resposta.json() as Promise<Tarefa>;
 }
 
 export async function editarTarefa(
     id: string,
     dados: DadosEdicaoTarefa
 ): Promise<void> {
-    const resposta = await fetch(
-        `${ENDERECO_API}/${encodeURIComponent(id)}`,
-        {
-            method: "PUT",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify(dados)
-        }
-    );
-
-    await verificarResposta(resposta);
+    await requisicaoApi<void>(`/tarefas/${encodeURIComponent(id)}`, {
+        method: "PUT",
+        headers: CABECALHOS_JSON,
+        body: JSON.stringify(dados)
+    });
 }
 
 export async function concluirTarefa(id: string): Promise<void> {
-    const resposta = await fetch(
-        `${ENDERECO_API}/${encodeURIComponent(id)}/concluir`,
-        {
-            method: "PATCH"
-        }
+    await requisicaoApi<void>(
+        `/tarefas/${encodeURIComponent(id)}/concluir`,
+        { method: "PATCH" }
     );
-
-    await verificarResposta(resposta);
 }
 
 export async function reabrirTarefa(id: string): Promise<void> {
-    const resposta = await fetch(
-        `${ENDERECO_API}/${encodeURIComponent(id)}/reabrir`,
-        {
-            method: "PATCH"
-        }
+    await requisicaoApi<void>(
+        `/tarefas/${encodeURIComponent(id)}/reabrir`,
+        { method: "PATCH" }
     );
-
-    await verificarResposta(resposta);
 }
 
 export async function excluirTarefa(id: string): Promise<void> {
-    const resposta = await fetch(
-        `${ENDERECO_API}/${encodeURIComponent(id)}`,
-        {
-            method: "DELETE"
-        }
-    );
-
-    await verificarResposta(resposta);
+    await requisicaoApi<void>(`/tarefas/${encodeURIComponent(id)}`, {
+        method: "DELETE"
+    });
 }

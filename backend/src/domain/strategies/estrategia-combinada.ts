@@ -35,4 +35,9 @@ export class EstrategiaCombinada implements EstrategiaPrioridade {
 
         return Math.round(prioridade * 100) / 100;
     }
+
+    public explicarPrioridade(tarefa: Tarefa, dataAtual: Date): string {
+        const dias = Math.max(0, Math.ceil((tarefa.dataPrazo.getTime() - dataAtual.getTime()) / 86_400_000));
+        return `Combina prazo (${dias} dia(s)), dificuldade (${tarefa.dificuldade}/5) e peso da avaliação (${tarefa.pesoAvaliacao}%).`;
+    }
 }

@@ -1,14 +1,27 @@
 
-import { BrowserRouter, NavLink, Route, Routes, Navigate } from "react-router-dom";
+import { useEffect } from "react";
+import { BrowserRouter, NavLink, Route, Routes, Navigate, Outlet } from "react-router-dom";
 import VisaoGeral from "./pages/visao-geral";
 import MinhasTarefas from "./pages/minhas-tarefas";
 import Disciplinas from "./pages/disciplinas";
+import Planejamento from "./pages/planejamento";
+import Estudar from "./pages/estudar";
+import Configuracoes from "./pages/configuracoes";
+import Autenticacao from "./pages/autenticacao";
+import { ProvedorAutenticacao, useAutenticacao } from "./contexto/AutenticacaoContexto";
 import "./App.css";
 
-function App() {
+function RotaProtegida() {
+    const { usuario, carregando } = useAutenticacao();
+    if (carregando) return <div className="carregando-aplicativo">Carregando seu espaço...</div>;
+    return usuario ? <Outlet /> : <Navigate to="/login" replace />;
+}
+
+function LayoutPrincipal() {
+    const { usuario, sair } = useAutenticacao();
+
     return (
-        <BrowserRouter>
-            <div className="aplicativo">
+        <div className="aplicativo">
                 <aside className="menu-lateral">
                     <div className="marca">
                         <img
@@ -50,6 +63,13 @@ function App() {
                         </NavLink>
 
                         <NavLink
+                            to="/estudar"
+                            className={({ isActive }) => `link-menu ${isActive ? "ativo" : ""}`}
+                        >
+                            ◷ <span>Estudar</span>
+                        </NavLink>
+
+                        <NavLink
                             to="/planejamento"
                             className={({ isActive }) =>
                                 `link-menu ${isActive ? "ativo" : ""}`
@@ -65,45 +85,61 @@ function App() {
                         <p>Pequenos progressos também são progressos.</p>
                     </div>
 
+                    <NavLink
+                        to="/configuracoes"
+                        className={({ isActive }) =>
+                            `link-menu link-configuracoes ${isActive ? "ativo" : ""}`
+                        }
+                    >
+                        ⚙ <span>Configurações</span>
+                    </NavLink>
+
                     <div className="perfil">
-                        <div className="avatar">V</div>
+                        <div className="avatar">{usuario?.nome.charAt(0).toUpperCase()}</div>
                         <div>
-                            <strong>Meu espaço</strong>
-                            <span>Estudante</span>
+                            <strong>{usuario?.nome}</strong>
+                            <span>{usuario?.instituicao}</span>
                         </div>
+                        <button type="button" className="botao-sair" onClick={() => void sair()} aria-label="Sair da conta" title="Sair">↪</button>
                     </div>
                 </aside>
 
                 <main className="conteudo">
-                    <Routes>
-                        <Route path="/" element={<Navigate to="/inicio" replace />} />
-                        <Route path="/inicio" element={<VisaoGeral />} />
-                        <Route path="/disciplinas" element={<Disciplinas />} />
-                        <Route path="/tarefas" element={<MinhasTarefas />} />
-                        <Route
-                            path="/planejamento"
-                            element={
-                                <section className="secao-disciplinas">
-                                    <header className="cabecalho">
-                                        <div>
-                                            <p className="sobretitulo">SUA ROTINA</p>
-                                            <h1>Planejamento <span>✦</span></h1>
-                                            <p className="subtitulo">
-                                                Em breve, seu planejamento inteligente de estudos.
-                                            </p>
-                                        </div>
-                                    </header>
-                                </section>
-                            }
-                        />
-                        <Route path="*" element={<Navigate to="/inicio" replace />} />
-                    </Routes>
-
+                    <Outlet />
                     <footer className="rodape">
                         <span>StudyFlow</span> · Construindo uma rotina de estudos mais leve.
                     </footer>
                 </main>
-            </div>
+        </div>
+    );
+}
+
+function App() {
+    useEffect(() => {
+        document.documentElement.dataset.theme =
+            localStorage.getItem("studyflow_tema") === "escuro" ? "escuro" : "claro";
+    }, []);
+
+    return (
+        <BrowserRouter>
+            <ProvedorAutenticacao>
+                <Routes>
+                    <Route path="/login" element={<Autenticacao modo="login" />} />
+                    <Route path="/cadastro" element={<Autenticacao modo="cadastro" />} />
+                    <Route element={<RotaProtegida />}>
+                        <Route element={<LayoutPrincipal />}>
+                            <Route path="/" element={<Navigate to="/inicio" replace />} />
+                            <Route path="/inicio" element={<VisaoGeral />} />
+                            <Route path="/disciplinas" element={<Disciplinas />} />
+                            <Route path="/tarefas" element={<MinhasTarefas />} />
+                            <Route path="/planejamento" element={<Planejamento />} />
+                            <Route path="/estudar" element={<Estudar />} />
+                            <Route path="/configuracoes" element={<Configuracoes />} />
+                            <Route path="*" element={<Navigate to="/inicio" replace />} />
+                        </Route>
+                    </Route>
+                </Routes>
+            </ProvedorAutenticacao>
         </BrowserRouter>
     );
 }

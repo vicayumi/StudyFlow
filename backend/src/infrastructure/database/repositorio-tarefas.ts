@@ -89,34 +89,37 @@ export class RepositorioTarefas {
     }
 
     public async listarPorDisciplina(
-        disciplinaId: string
+        disciplinaId: string,
+        usuarioId: string
     ): Promise<TarefaComDisciplina[]> {
         const [linhas] = await conexao.execute<TarefaBanco[]>(
             `SELECT id, disciplina_id, titulo, descricao, data_prazo,
                     dificuldade, duracao_estimada, tempo_estudado,
                     peso_avaliacao, estado
              FROM tarefas
-             WHERE disciplina_id = ?
+             WHERE disciplina_id = ? AND usuario_id = ?
              ORDER BY data_prazo`,
-            [disciplinaId]
+            [disciplinaId, usuarioId]
         );
 
         return linhas.map((linha) => this.converterParaTarefa(linha));
     }
 
-    public async listarTodas(): Promise<TarefaComDisciplina[]> {        
-        const [linhas] = await conexao.query<TarefaBanco[]>(
+    public async listarTodas(usuarioId: string): Promise<TarefaComDisciplina[]> {
+        const [linhas] = await conexao.execute<TarefaBanco[]>(
             `SELECT id, disciplina_id, titulo, descricao, data_prazo,
                     dificuldade, duracao_estimada, tempo_estudado,
                     peso_avaliacao, estado
              FROM tarefas
-             ORDER BY data_prazo`
+             WHERE usuario_id = ?
+             ORDER BY data_prazo`,
+            [usuarioId]
         );
 
         return linhas.map((linha) => this.converterParaTarefa(linha));
     }
 
-    public async criar(dados: DadosNovaTarefa): Promise<Tarefa> {
+    public async criar(dados: DadosNovaTarefa, usuarioId: string): Promise<Tarefa> {
         const id = randomUUID();
 
         const tarefa = new Tarefa(
@@ -131,12 +134,13 @@ export class RepositorioTarefas {
 
         await conexao.execute<ResultSetHeader>(
             `INSERT INTO tarefas
-                (id, disciplina_id, titulo, descricao, data_prazo,
+                (id, usuario_id, disciplina_id, titulo, descricao, data_prazo,
                  dificuldade, duracao_estimada, tempo_estudado,
                  peso_avaliacao, estado)
-             VALUES (?, ?, ?, ?, ?, ?, ?, 0, ?, 'pendente')`,
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0, ?, 'pendente')`,
             [
                 tarefa.id,
+                usuarioId,
                 dados.disciplinaId,
                 tarefa.titulo,
                 tarefa.descricao,
@@ -151,7 +155,8 @@ export class RepositorioTarefas {
     }
     public async editar(
         id: string,
-        dados: DadosEdicaoTarefa
+        dados: DadosEdicaoTarefa,
+        usuarioId: string
     ): Promise<boolean> {
         const [resultado] = await conexao.execute<ResultSetHeader>(
             `UPDATE tarefas
@@ -162,7 +167,7 @@ export class RepositorioTarefas {
                 dificuldade = ?,
                 duracao_estimada = ?,
                 peso_avaliacao = ?
-            WHERE id = ?`,
+            WHERE id = ? AND usuario_id = ?`,
             [
                 dados.disciplinaId,
                 dados.titulo.trim(),
@@ -171,7 +176,8 @@ export class RepositorioTarefas {
                 dados.dificuldade,
                 dados.duracaoEstimada,
                 dados.pesoAvaliacao,
-                id
+                id,
+                usuarioId
             ]
         );
 
@@ -180,19 +186,19 @@ export class RepositorioTarefas {
         }
 
         const [tarefasEncontradas] = await conexao.execute<RowDataPacket[]>(
-            "SELECT id FROM tarefas WHERE id = ?",
-            [id]
+            "SELECT id FROM tarefas WHERE id = ? AND usuario_id = ?",
+            [id, usuarioId]
         );
 
         return tarefasEncontradas.length > 0;
     }
 
-    public async concluir(id: string): Promise<boolean> {
+    public async concluir(id: string, usuarioId: string): Promise<boolean> {
         const [resultado] = await conexao.execute<ResultSetHeader>(
             `UPDATE tarefas
             SET estado = 'concluida'
-            WHERE id = ? AND estado <> 'concluida'`,
-            [id]
+            WHERE id = ? AND usuario_id = ? AND estado <> 'concluida'`,
+            [id, usuarioId]
         );
 
         if (resultado.affectedRows > 0) {
@@ -201,19 +207,19 @@ export class RepositorioTarefas {
 
         const [linhas] = await conexao.execute<TarefaBanco[]>(
             `SELECT id FROM tarefas
-            WHERE id = ? AND estado = 'concluida'`,
-            [id]
+            WHERE id = ? AND usuario_id = ? AND estado = 'concluida'`,
+            [id, usuarioId]
         );
 
         return linhas.length > 0;
     }
 
-    public async reabrir(id: string): Promise<boolean> {
+    public async reabrir(id: string, usuarioId: string): Promise<boolean> {
         const [resultado] = await conexao.execute<ResultSetHeader>(
             `UPDATE tarefas
              SET estado = 'pendente'
-             WHERE id = ? AND estado <> 'pendente'`,
-            [id]
+             WHERE id = ? AND usuario_id = ? AND estado <> 'pendente'`,
+            [id, usuarioId]
         );
 
         if (resultado.affectedRows > 0) {
@@ -221,17 +227,17 @@ export class RepositorioTarefas {
         }
 
         const [linhas] = await conexao.execute<TarefaBanco[]>(
-            "SELECT id FROM tarefas WHERE id = ?",
-            [id]
+            "SELECT id FROM tarefas WHERE id = ? AND usuario_id = ?",
+            [id, usuarioId]
         );
 
         return linhas.length > 0;
     }
 
-    public async excluir(id: string): Promise<boolean> {
+    public async excluir(id: string, usuarioId: string): Promise<boolean> {
         const [resultado] = await conexao.execute<ResultSetHeader>(
-            `DELETE FROM tarefas WHERE id = ?`,
-            [id]
+            `DELETE FROM tarefas WHERE id = ? AND usuario_id = ?`,
+            [id, usuarioId]
         );
 
         return resultado.affectedRows > 0;

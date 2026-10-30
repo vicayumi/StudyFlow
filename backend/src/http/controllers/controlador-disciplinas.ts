@@ -5,9 +5,9 @@ import { RepositorioDisciplinas } from "../../infrastructure/database/repositori
 export class ControladorDisciplinas {
     private readonly repositorio = new RepositorioDisciplinas();
 
-    public listar = async (_requisicao: Request, resposta: Response): Promise<void> => {
+    public listar = async (requisicao: Request, resposta: Response): Promise<void> => {
         try {
-            const disciplinas = await this.repositorio.listar();
+            const disciplinas = await this.repositorio.listar(requisicao.usuarioId!);
             resposta.json(disciplinas);
         } catch {
             resposta.status(500).json({
@@ -19,7 +19,8 @@ export class ControladorDisciplinas {
     public buscarPorId = async (requisicao: Request, resposta: Response): Promise<void> => {
         try {
             const disciplina = await this.repositorio.buscarPorId(
-                requisicao.params.id as string
+                requisicao.params.id as string,
+                requisicao.usuarioId!
             );
 
             if (!disciplina) {
@@ -39,7 +40,7 @@ export class ControladorDisciplinas {
 
     public criar = async (requisicao: Request, resposta: Response): Promise<void> => {
         try {
-            const { nome, cor } = requisicao.body;
+            const { nome, cor } = requisicao.body ?? {};
 
             if (typeof nome !== "string" || !nome.trim()) {
                 resposta.status(400).json({
@@ -58,14 +59,10 @@ export class ControladorDisciplinas {
                 return;
             }
 
-            const disciplina = await this.repositorio.criar(nome, cor);
+            const disciplina = await this.repositorio.criar(nome, requisicao.usuarioId!, cor);
             resposta.status(201).json(disciplina);
         } catch (erro) {
-            if (erro instanceof Error) {
-                resposta.status(400).json({ erro: erro.message });
-                return;
-            }
-
+            console.error("Erro ao criar disciplina:", erro);
             resposta.status(500).json({
                 erro: "Erro ao criar disciplina."
             });
@@ -74,7 +71,7 @@ export class ControladorDisciplinas {
 
     public atualizar = async (requisicao: Request, resposta: Response): Promise<void> => {
         try {
-            const { nome, cor } = requisicao.body;
+            const { nome, cor } = requisicao.body ?? {};
             const id = requisicao.params.id as string;
 
             if (
@@ -104,7 +101,7 @@ export class ControladorDisciplinas {
                 return;
             }
 
-            const disciplina = await this.repositorio.atualizar(id, { nome, cor });
+            const disciplina = await this.repositorio.atualizar(id, { nome, cor }, requisicao.usuarioId!);
 
             if (!disciplina) {
                 resposta.status(404).json({
@@ -115,11 +112,7 @@ export class ControladorDisciplinas {
 
             resposta.json(disciplina);
         } catch (erro) {
-            if (erro instanceof Error) {
-                resposta.status(400).json({ erro: erro.message });
-                return;
-            }
-
+            console.error("Erro ao atualizar disciplina:", erro);
             resposta.status(500).json({
                 erro: "Erro ao atualizar disciplina."
             });
@@ -129,7 +122,8 @@ export class ControladorDisciplinas {
     public excluir = async (requisicao: Request, resposta: Response): Promise<void> => {
         try {
             const excluida = await this.repositorio.excluir(
-                requisicao.params.id as string
+                requisicao.params.id as string,
+                requisicao.usuarioId!
             );
 
             if (!excluida) {

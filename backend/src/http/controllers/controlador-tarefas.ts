@@ -30,7 +30,7 @@ export class ControladorTarefas {
                 }
 
                 const disciplina =
-                    await this.repositorioDisciplinas.buscarPorId(disciplinaId);
+                    await this.repositorioDisciplinas.buscarPorId(disciplinaId, requisicao.usuarioId!);
 
                 if (!disciplina) {
                     resposta.status(404).json({
@@ -41,14 +41,15 @@ export class ControladorTarefas {
 
                 const tarefas =
                     await this.repositorioTarefas.listarPorDisciplina(
-                        disciplinaId
+                        disciplinaId,
+                        requisicao.usuarioId!
                     );
 
                 resposta.json(tarefas);
                 return;
             }
 
-            const tarefas = await this.repositorioTarefas.listarTodas();
+            const tarefas = await this.repositorioTarefas.listarTodas(requisicao.usuarioId!);
             resposta.json(tarefas);
         } catch {
             resposta.status(500).json({
@@ -109,7 +110,8 @@ export class ControladorTarefas {
 
             const disciplina =
                 await this.repositorioDisciplinas.buscarPorId(
-                    dados.disciplinaId
+                    dados.disciplinaId,
+                    requisicao.usuarioId!
                 );
 
             if (!disciplina) {
@@ -119,18 +121,14 @@ export class ControladorTarefas {
                 return;
             }
 
-            const tarefa = await this.repositorioTarefas.criar(dados);
+            const tarefa = await this.repositorioTarefas.criar(dados, requisicao.usuarioId!);
 
             resposta.status(201).json({
                 ...tarefa,
                 disciplinaId: dados.disciplinaId
             });
         } catch (erro) {
-            if (erro instanceof Error) {
-                resposta.status(400).json({ erro: erro.message });
-                return;
-            }
-
+            console.error("Erro ao criar tarefa:", erro);
             resposta.status(500).json({
                 erro: "Erro ao criar tarefa."
             });
@@ -195,7 +193,8 @@ export class ControladorTarefas {
 
             const disciplina =
                 await this.repositorioDisciplinas.buscarPorId(
-                    dados.disciplinaId
+                    dados.disciplinaId,
+                    requisicao.usuarioId!
                 );
 
             if (!disciplina) {
@@ -205,7 +204,7 @@ export class ControladorTarefas {
                 return;
             }
 
-            const editada = await this.repositorioTarefas.editar(id, dados);
+            const editada = await this.repositorioTarefas.editar(id, dados, requisicao.usuarioId!);
 
             if (!editada) {
                 resposta.status(404).json({
@@ -238,7 +237,7 @@ export class ControladorTarefas {
                 return;
             }
 
-            const concluida = await this.repositorioTarefas.concluir(id);
+            const concluida = await this.repositorioTarefas.concluir(id, requisicao.usuarioId!);
 
             if (!concluida) {
                 resposta.status(404).json({
@@ -271,7 +270,7 @@ export class ControladorTarefas {
                 return;
             }
 
-            const reaberta = await this.repositorioTarefas.reabrir(id);
+            const reaberta = await this.repositorioTarefas.reabrir(id, requisicao.usuarioId!);
 
             if (!reaberta) {
                 resposta.status(404).json({
@@ -304,7 +303,7 @@ export class ControladorTarefas {
                 return;
             }
 
-            const excluida = await this.repositorioTarefas.excluir(id);
+            const excluida = await this.repositorioTarefas.excluir(id, requisicao.usuarioId!);
 
             if (!excluida) {
                 resposta.status(404).json({
@@ -369,7 +368,7 @@ export class ControladorTarefas {
             return "Informe o prazo da tarefa.";
         }
 
-        if (Number.isNaN(new Date(dataPrazo).getTime())) {
+        if (Number.isNaN(this.converterPrazo(dataPrazo).getTime())) {
             return "A data do prazo é inválida.";
         }
 
@@ -432,7 +431,7 @@ export class ControladorTarefas {
             return null;
         }
 
-        const data = new Date(dados.dataPrazo);
+        const data = this.converterPrazo(dados.dataPrazo);
 
         if (Number.isNaN(data.getTime())) {
             return null;
@@ -447,5 +446,29 @@ export class ControladorTarefas {
             duracaoEstimada: dados.duracaoEstimada,
             pesoAvaliacao: dados.pesoAvaliacao
         };
+    }
+
+    private converterPrazo(valor: string): Date {
+        const somenteData = /^(\d{4})-(\d{2})-(\d{2})$/.exec(valor);
+
+        if (!somenteData) {
+            return new Date(valor);
+        }
+
+        const [, anoTexto, mesTexto, diaTexto] = somenteData;
+        const ano = Number(anoTexto);
+        const mes = Number(mesTexto);
+        const dia = Number(diaTexto);
+        const data = new Date(ano, mes - 1, dia, 23, 59, 59, 999);
+
+        if (
+            data.getFullYear() !== ano ||
+            data.getMonth() !== mes - 1 ||
+            data.getDate() !== dia
+        ) {
+            return new Date(Number.NaN);
+        }
+
+        return data;
     }
 }
