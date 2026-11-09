@@ -1,5 +1,5 @@
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { BrowserRouter, NavLink, Route, Routes, Navigate, Outlet } from "react-router-dom";
 import VisaoGeral from "./pages/visao-geral";
 import MinhasTarefas from "./pages/minhas-tarefas";
@@ -19,6 +19,16 @@ function RotaProtegida() {
 
 function LayoutPrincipal() {
     const { usuario, sair } = useAutenticacao();
+    const frasesMotivacionais = [
+        "Cada minuto de dedicação aproxima você do seu objetivo.",
+        "Você não precisa fazer tudo hoje. Só precisa dar o próximo passo.",
+        "Pequenos avanços, repetidos com carinho, viram grandes conquistas.",
+        "Seu esforço de hoje é um presente para o seu eu do futuro.",
+        "Continue no seu ritmo: constância vale mais que pressa.",
+        "Aprender leva tempo — e você está investindo bem o seu.",
+        "Uma sessão de cada vez. Você está no caminho certo."
+    ];
+    const [indiceFrase, setIndiceFrase] = useState(0);
 
     return (
         <div className="aplicativo">
@@ -81,8 +91,13 @@ function LayoutPrincipal() {
 
                     <div className="cartao-motivacao">
                         <span className="estrela">✦</span>
-                        <h3>Um passo de cada vez!</h3>
-                        <p>Pequenos progressos também são progressos.</p>
+                        <p className="frase-gerada-sidebar" aria-live="polite">“{frasesMotivacionais[indiceFrase]}”</p>
+                        <button
+                            type="button"
+                            onClick={() => setIndiceFrase((atual) => (atual + 1) % frasesMotivacionais.length)}
+                        >
+                            Nova frase
+                        </button>
                     </div>
 
                     <NavLink

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { listarTarefas, type Tarefa } from "../services/tarefas";
 import { buscarEstudoDoDia, buscarResumoPeriodo, registrarEstudo, type ResumoEstudoDiario, type ResumoPeriodo } from "../services/sessoes-estudo";
+import NotificacaoTemporaria from "../components/notificacao-temporaria";
 
 function hojeLocal(): string {
     const d = new Date();
@@ -8,15 +9,6 @@ function hojeLocal(): string {
 }
 
 export default function Estudar() {
-    const FRASES_MOTIVACIONAIS = [
-        "Cada minuto de dedicação aproxima você do seu objetivo.",
-        "Você não precisa fazer tudo hoje. Só precisa dar o próximo passo.",
-        "Pequenos avanços, repetidos com carinho, viram grandes conquistas.",
-        "Seu esforço de hoje é um presente para o seu eu do futuro.",
-        "Continue no seu ritmo: constância vale mais que pressa.",
-        "Aprender leva tempo — e você está investindo bem o seu.",
-        "Uma sessão de cada vez. Você está no caminho certo."
-    ];
     const [tarefas, setTarefas] = useState<Tarefa[]>([]);
     const [tarefaId, setTarefaId] = useState("");
     const [resumo, setResumo] = useState<ResumoEstudoDiario>({ sessoes: [], totalSegundos: 0 });
@@ -30,13 +22,14 @@ export default function Estudar() {
     const [salvando, setSalvando] = useState(false);
     const [tempoManual, setTempoManual] = useState("30");
     const [minutosSessaoAtual, setMinutosSessaoAtual] = useState(0);
-    const [indiceFrase, setIndiceFrase] = useState(0);
-    const [periodoGrafico, setPeriodoGrafico] = useState<"semana" | "mes">("semana");
+    const [periodoGrafico, setPeriodoGrafico] = useState<"hoje" | "semana" | "mes">("semana");
     const [resumoPeriodo, setResumoPeriodo] = useState<ResumoPeriodo>({ totalSegundos: 0, dias: [] });
 
     async function atualizarResumo() {
         setResumo(await buscarEstudoDoDia(hojeLocal()));
-        setResumoPeriodo(await buscarResumoPeriodo(periodoGrafico));
+        if (periodoGrafico !== "hoje") {
+            setResumoPeriodo(await buscarResumoPeriodo(periodoGrafico));
+        }
     }
 
     useEffect(() => {
@@ -48,6 +41,7 @@ export default function Estudar() {
     }, []);
 
     useEffect(() => {
+        if (periodoGrafico === "hoje") return;
         void buscarResumoPeriodo(periodoGrafico).then(setResumoPeriodo).catch(() => undefined);
     }, [periodoGrafico]);
 
@@ -73,10 +67,29 @@ export default function Estudar() {
     const tempoFormatado = useMemo(() => `${String(Math.floor(segundos / 60)).padStart(2, "0")}:${String(segundos % 60).padStart(2, "0")}`, [segundos]);
 
     function iniciarPomodoro() {
-        if (!tarefaId) { setErro("Cadastre uma tarefa antes de iniciar o cronômetro."); return; }
+        if (!tarefaId) { avisarSemTarefa(); return; }
         setErro("");
         if (segundos === 0) setSegundos(duracaoPomodoro * 60);
         setRodando(true);
+    }
+
+    function avisarSemTarefa() {
+        setErro("");
+        window.setTimeout(() => {
+            setErro("Não há nenhuma tarefa pendente cadastrada para estudar. Cadastre uma tarefa ou reabra uma concluída.");
+        }, 0);
+    }
+
+    function iniciarCronometroLivre() {
+        if (!tarefaId) { avisarSemTarefa(); return; }
+        setErro("");
+        setCronometroLivreRodando(true);
+    }
+
+    function continuarCronometroLivre() {
+        if (!tarefaId) { avisarSemTarefa(); return; }
+        setErro("");
+        setCronometroLivreRodando(true);
     }
 
     async function concluirPomodoro() {
@@ -93,7 +106,7 @@ export default function Estudar() {
     }
 
     async function salvarTempoManual() {
-        if (!tarefaId) { setErro("Selecione uma tarefa primeiro."); return; }
+        if (!tarefaId) { avisarSemTarefa(); return; }
         const duracao = converterTempoDigitado(tempoManual);
         if (!duracao || duracao > 720) {
             setErro("Digite um tempo válido, como 45, 1h ou 1h 20min (máximo de 12 horas).");
@@ -153,27 +166,33 @@ export default function Estudar() {
         return new Date(`${data}T12:00:00`).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" });
     }
 
+    const diasGrafico = periodoGrafico === "hoje"
+        ? [{ data: hojeLocal(), totalSegundos: resumo.totalSegundos }]
+        : resumoPeriodo.dias;
+    const totalGrafico = diasGrafico.reduce((total, dia) => total + dia.totalSegundos, 0);
+    const maxHorasGrafico = Math.max(4, Math.ceil(Math.max(...diasGrafico.map((dia) => dia.totalSegundos), 0) / 3600));
+
     return (
         <section className="secao-disciplinas pagina-estudar">
             <header className="cabecalho"><div><p className="sobretitulo">FOCO NO SEU RITMO</p><h1>Hora de estudar <span>✦</span></h1><p className="subtitulo">Use o Pomodoro, cronometre livremente ou registre seu tempo de estudo.</p></div></header>
-            {erro && <p className="mensagem-erro" role="alert">{erro}</p>}
-            {sucesso && <p className="aviso-planejamento" role="status">{sucesso}</p>}
+            <NotificacaoTemporaria mensagem={erro} tipo="erro" />
+            <NotificacaoTemporaria mensagem={sucesso} tipo="sucesso" />
             <section className="cartao-estudar resumo-estudo-dia">
                 <div className="icone-resumo-estudo">◷</div><div><span>Seu tempo de estudo hoje</span><strong>{horas}h {minutos.toString().padStart(2, "0")}min {segundosHoje.toString().padStart(2, "0")}s</strong></div>
                 <small>{resumo.sessoes.length} {resumo.sessoes.length === 1 ? "sessão registrada" : "sessões registradas"}</small>
             </section>
             <section className="cartao-estudar painel-produtividade">
-                <div className="cabecalho-grafico"><div><p className="sobretitulo">SEU PROGRESSO</p><h2>Tempo dedicado</h2></div><div className="controles-grafico"><div className="seletor-periodo-grafico"><button type="button" className={periodoGrafico === "semana" ? "ativo" : ""} onClick={() => setPeriodoGrafico("semana")}>7 dias</button><button type="button" className={periodoGrafico === "mes" ? "ativo" : ""} onClick={() => setPeriodoGrafico("mes")}>Este mês</button></div></div></div>
-                <strong className="total-periodo-estudo">{formatarTempo(resumoPeriodo.totalSegundos) || "0min"}</strong>
+                <div className="cabecalho-grafico"><div><p className="sobretitulo">SEU PROGRESSO</p><h2>Tempo dedicado</h2></div><div className="controles-grafico"><div className="seletor-periodo-grafico"><button type="button" className={periodoGrafico === "hoje" ? "ativo" : ""} onClick={() => setPeriodoGrafico("hoje")}>Hoje</button><button type="button" className={periodoGrafico === "semana" ? "ativo" : ""} onClick={() => setPeriodoGrafico("semana")}>7 dias</button><button type="button" className={periodoGrafico === "mes" ? "ativo" : ""} onClick={() => setPeriodoGrafico("mes")}>Este mês</button></div></div></div>
+                <strong className="total-periodo-estudo">{formatarTempo(totalGrafico) || "0min"}</strong>
                 <div className="grafico-com-escala" role="img" aria-label="Gráfico do tempo estudado por dia, com escala em horas">
                 <div className="escala-grafico-horas">
-                    {Array.from({ length: Math.max(4, Math.ceil(Math.max(...resumoPeriodo.dias.map((dia) => dia.totalSegundos), 0) / 3600)) + 1 }, (_, hora) => <span key={hora} style={{ bottom: `${(hora / Math.max(4, Math.ceil(Math.max(...resumoPeriodo.dias.map((dia) => dia.totalSegundos), 0) / 3600))) * 100}%` }}>{hora === 0 ? "0" : `${hora}h`}</span>)}
+                    {Array.from({ length: maxHorasGrafico + 1 }, (_, hora) => <span key={hora} style={{ bottom: `${(hora / maxHorasGrafico) * 100}%` }}>{hora === 0 ? "0" : `${hora}h`}</span>)}
                 </div>
                 <div className="grafico-estudo" role="presentation">
-                    {resumoPeriodo.dias.map((dia) => {
-                        const maxHoras = Math.max(4, Math.ceil(Math.max(...resumoPeriodo.dias.map((item) => item.totalSegundos), 0) / 3600));
-                        const altura = (dia.totalSegundos / (maxHoras * 3600)) * 100;
-                        return <div className="coluna-grafico-estudo" key={dia.data} title={`${rotuloDia(dia.data)}: ${formatarTempo(dia.totalSegundos) || "0s"}`}><div className="trilho-grafico"><span style={{ height: `${altura}%` }} /></div><small>{periodoGrafico === "semana" ? new Date(`${dia.data}T12:00:00`).toLocaleDateString("pt-BR", { weekday: "short" }).replace(".", "") : rotuloDia(dia.data)}</small></div>;
+                    {diasGrafico.map((dia) => {
+                        const altura = (dia.totalSegundos / (maxHorasGrafico * 3600)) * 100;
+                        const rotulo = periodoGrafico === "hoje" ? "Hoje" : periodoGrafico === "semana" ? new Date(`${dia.data}T12:00:00`).toLocaleDateString("pt-BR", { weekday: "short" }).replace(".", "") : rotuloDia(dia.data);
+                        return <div className="coluna-grafico-estudo" key={dia.data} title={`${rotuloDia(dia.data)}: ${formatarTempo(dia.totalSegundos) || "0s"}`}><div className="trilho-grafico"><span style={{ height: `${altura}%` }} /></div><small>{rotulo}</small></div>;
                     })}
                 </div>
                 </div>
@@ -188,8 +207,8 @@ export default function Estudar() {
                     </select>
                     <div className="relogio-livre" aria-live="polite">{String(Math.floor(segundosLivres / 3600)).padStart(2, "0")}:{String(Math.floor((segundosLivres % 3600) / 60)).padStart(2, "0")}:{String(segundosLivres % 60).padStart(2, "0")}</div>
                     <div className="acoes-pomodoro">
-                        {!cronometroLivreRodando ? <button className="botao-salvar" type="button" disabled={salvando || rodando || !tarefaId} onClick={() => { setErro(""); setCronometroLivreRodando(true); }}>Iniciar</button> : <button className="botao-secundario" type="button" onClick={() => setCronometroLivreRodando(false)}>Pausar</button>}
-                        {!cronometroLivreRodando && segundosLivres > 0 && <button className="botao-salvar" type="button" disabled={salvando || rodando} onClick={() => setCronometroLivreRodando(true)}>Continuar</button>}
+                        {!cronometroLivreRodando ? <button className="botao-salvar" type="button" disabled={salvando || rodando} onClick={iniciarCronometroLivre}>Iniciar</button> : <button className="botao-secundario" type="button" onClick={() => setCronometroLivreRodando(false)}>Pausar</button>}
+                        {!cronometroLivreRodando && segundosLivres > 0 && <button className="botao-salvar" type="button" disabled={salvando || rodando} onClick={continuarCronometroLivre}>Continuar</button>}
                         {!cronometroLivreRodando && segundosLivres > 0 && <button className="botao-secundario" type="button" disabled={salvando} onClick={() => void encerrarCronometroLivre()}>{salvando ? "Salvando sessão..." : "Encerrar e salvar"}</button>}
                         {!cronometroLivreRodando && segundosLivres === 0 && <button className="botao-secundario" type="button" disabled={salvando || rodando} onClick={() => setSegundosLivres(0)}>Zerar</button>}
                     </div>
@@ -255,13 +274,11 @@ export default function Estudar() {
                             </button>
                         ))}
                     </div>
-                    <button className="botao-salvar" type="button" onClick={() => void salvarTempoManual()} disabled={salvando || !tarefaId}>Registrar tempo</button>
+                    <button className="botao-salvar" type="button" onClick={() => void salvarTempoManual()} disabled={salvando}>Registrar tempo</button>
                     <div className="frase-motivacional-manual" aria-live="polite">
                         <span className="estrela-frase">✦</span>
-                        <p>“{FRASES_MOTIVACIONAIS[indiceFrase]}”</p>
-                        <button type="button" onClick={() => setIndiceFrase((indiceFrase + 1) % FRASES_MOTIVACIONAIS.length)}>
-                            Nova frase
-                        </button>
+                        <h3>Um passo de cada vez!</h3>
+                        <p>Pequenos progressos também são progressos.</p>
                     </div>
                 </section>
             </div>

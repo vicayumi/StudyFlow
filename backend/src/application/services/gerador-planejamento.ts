@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { Tarefa } from "../../domain/entities/tarefa.js";
 import { SessaoEstudo } from "../../domain/entities/sessao-estudo.js";
 import { EstrategiaPrioridade } from "../../domain/interfaces/estrategia-prioridade.js";
@@ -64,10 +65,8 @@ export class GeradorPlanejamento {
             explicacao: this.estrategia.explicarPrioridade(tarefa, dataAtual)
         })).sort((a, b) => b.prioridade - a.prioridade);
 
-        let contadorSessoes = 0;
-
         for (const tarefa of tarefasOrdenadas) {
-            let minutosRestantes = tarefa.obterTempoRestante();
+            let minutosRestantes = tarefa.duracaoEstimada;
 
             for (
                 let indice = 0;
@@ -107,7 +106,7 @@ export class GeradorPlanejamento {
 
                 sessoes.push(
                     new SessaoEstudo(
-                        `sessao-${++contadorSessoes}`,
+                        randomUUID(),
                         tarefa.id,
                         inicio,
                         fim
@@ -121,7 +120,6 @@ export class GeradorPlanejamento {
                     intervalosLivres.splice(indice, 1);
                 } else {
                     intervalo.inicio = fim;
-                    indice++;
                 }
             }
 

@@ -25,7 +25,7 @@ export interface DadosPlanoSalvo {
     estrategia: string;
     sessoes: SessaoPlanoSalva[];
     prioridades: PrioridadePlanoSalva[];
-    tarefasSemTempo: { id: string; titulo: string }[];
+    tarefasSemTempo: { id: string; titulo: string; diasAtraso?: number }[];
 }
 
 interface PlanoBanco extends RowDataPacket {
@@ -34,7 +34,7 @@ interface PlanoBanco extends RowDataPacket {
     estrategia: string;
     sessoes: string | SessaoPlanoSalva[];
     prioridades: string | PrioridadePlanoSalva[];
-    tarefas_sem_tempo: string | { id: string; titulo: string }[];
+    tarefas_sem_tempo: string | { id: string; titulo: string; diasAtraso?: number }[];
 }
 
 function decodificar<T>(valor: string | T): T {

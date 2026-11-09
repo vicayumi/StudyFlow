@@ -1,7 +1,8 @@
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { Link, Navigate, useNavigate } from "react-router-dom";
 import { useAutenticacao } from "../contexto/AutenticacaoContexto";
 import { cadastrar, entrar } from "../services/autenticacao";
+import NotificacaoTemporaria from "../components/notificacao-temporaria";
 
 const NIVEIS = [
     ["fundamental", "Ensino fundamental"],
@@ -25,6 +26,19 @@ export default function Autenticacao({ modo }: { modo: "login" | "cadastro" }) {
     const [cidade, setCidade] = useState("");
     const [erro, setErro] = useState("");
     const [enviando, setEnviando] = useState(false);
+
+    useEffect(() => {
+        // Login e cadastro são fluxos separados: não reaproveita os dados digitados.
+        setNome("");
+        setEmail("");
+        setSenha("");
+        setConfirmarSenha("");
+        setNivelEstudo("medio");
+        setInstituicao("");
+        setCursoSerie("");
+        setCidade("");
+        setErro("");
+    }, [modo]);
 
     if (usuario) return <Navigate to="/inicio" replace />;
 
@@ -64,17 +78,25 @@ export default function Autenticacao({ modo }: { modo: "login" | "cadastro" }) {
                         : "Entre para continuar organizando suas tarefas e seus estudos."}
                 </p>
 
-                {erro && <p className="mensagem-erro" role="alert">{erro}</p>}
+                {erro && <NotificacaoTemporaria mensagem={erro} tipo="erro" />}
 
-                <form className="formulario-autenticacao" onSubmit={(evento) => void enviar(evento)}>
+                <form className="formulario-autenticacao" autoComplete={cadastro ? "off" : "on"} onSubmit={(evento) => void enviar(evento)}>
                     {cadastro && (
                         <>
                             <label htmlFor="nome-conta">Seu nome</label>
                             <input id="nome-conta" autoComplete="name" value={nome} onChange={(e) => setNome(e.target.value)} minLength={2} maxLength={100} required />
                         </>
                     )}
-                    <label htmlFor="email-conta">E-mail</label>
-                    <input id="email-conta" type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+                    <label htmlFor={cadastro ? "email-cadastro" : "email-login"}>E-mail</label>
+                    <input
+                        id={cadastro ? "email-cadastro" : "email-login"}
+                        name={cadastro ? "email-nova-conta" : "email-login"}
+                        type="email"
+                        autoComplete={cadastro ? "off" : "email"}
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        required
+                    />
 
                     <label htmlFor="senha-conta">Senha</label>
                     <input id="senha-conta" type="password" autoComplete={cadastro ? "new-password" : "current-password"} value={senha} onChange={(e) => setSenha(e.target.value)} minLength={10} maxLength={128} required />

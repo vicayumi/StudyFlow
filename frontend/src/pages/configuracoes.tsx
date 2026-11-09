@@ -1,6 +1,7 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { useAutenticacao } from "../contexto/AutenticacaoContexto";
 import { alterarSenha, atualizarPerfil, type DadosPerfil } from "../services/autenticacao";
+import NotificacaoTemporaria from "../components/notificacao-temporaria";
 
 const PERFIL_VAZIO: DadosPerfil = {
     nome: "",
@@ -89,6 +90,8 @@ export default function Configuracoes() {
 
     return (
         <section className="secao-disciplinas pagina-configuracoes">
+            <NotificacaoTemporaria mensagem={erro || erroSenha} tipo="erro" />
+            <NotificacaoTemporaria mensagem={sucesso || sucessoSenha} tipo="sucesso" />
             <header className="cabecalho">
                 <div>
                     <p className="sobretitulo">PREFERÊNCIAS DA CONTA</p>
@@ -122,8 +125,6 @@ export default function Configuracoes() {
                     </div>
                 </div>
 
-                {erro && <p className="mensagem-erro" role="alert">{erro}</p>}
-                {sucesso && <p className="mensagem-sucesso" role="status">{sucesso}</p>}
 
                 <form className="formulario-configuracoes" onSubmit={(evento) => void salvar(evento)}>
                     <div className="campos-configuracoes">
@@ -178,8 +179,6 @@ export default function Configuracoes() {
                     </div>
                 </div>
 
-                {erroSenha && <p className="mensagem-erro" role="alert">{erroSenha}</p>}
-                {sucessoSenha && <p className="mensagem-sucesso" role="status">{sucessoSenha}</p>}
 
                 <form className="formulario-configuracoes" onSubmit={(evento) => void salvarSenha(evento)}>
                     <div className="campos-configuracoes campos-senha">

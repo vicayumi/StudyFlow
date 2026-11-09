@@ -164,7 +164,15 @@ textarea:focus-visible {
 /* Cartão motivacional */
 
 .cartao-motivacao {
-    margin-top: auto;
+    margin-top: 20px;
+    margin-bottom: auto;
+    display: flex;
+    height: 160px;
+    min-height: 160px;
+    flex: 0 0 160px;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
     padding: 19px 16px;
     border: 1px solid #eee5ff;
     border-radius: 15px;
@@ -197,6 +205,34 @@ textarea:focus-visible {
     color: #81768f;
     font-size: 11px;
     line-height: 1.7;
+}
+
+.cartao-motivacao .frase-gerada-sidebar {
+    display: -webkit-box;
+    height: 54px;
+    min-height: 54px;
+    align-content: center;
+    overflow: hidden;
+    margin: 10px 0 8px;
+    font-size: 11px;
+    line-height: 1.55;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+}
+
+.cartao-motivacao button {
+    padding: 5px 9px;
+    border: 0;
+    border-radius: 7px;
+    background: transparent;
+    color: var(--roxo);
+    font-size: 10px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.cartao-motivacao button:hover {
+    background: #eee5ff;
 }
 
 /* Perfil do menu */
@@ -2730,7 +2766,7 @@ textarea:focus-visible {
 
 .formulario-gerar-plano {
     display: grid;
-    grid-template-columns: minmax(170px, 220px) minmax(200px, 1fr) auto;
+    grid-template-columns: minmax(170px, 220px) minmax(190px, 1fr) minmax(220px, 1fr) auto;
     align-items: end;
     justify-content: start;
     gap: 10px 14px;
@@ -2758,13 +2794,24 @@ textarea:focus-visible {
     font-size: 13px;
 }
 
-.formulario-gerar-plano > label[for="estrategia-plano"],
-.formulario-gerar-plano > select {
+.formulario-gerar-plano > label[for="estrategia-plano"] {
     grid-column: 2;
+    grid-row: 1;
 }
 
-.formulario-gerar-plano > label[for="estrategia-plano"] {
+.formulario-gerar-plano > #estrategia-plano {
+    grid-column: 2;
+    grid-row: 2;
+}
+
+.formulario-gerar-plano > label[for="escopo-plano"] {
+    grid-column: 3;
     grid-row: 1;
+}
+
+.formulario-gerar-plano > #escopo-plano {
+    grid-column: 3;
+    grid-row: 2;
 }
 
 .formulario-gerar-plano > select {
@@ -2781,7 +2828,7 @@ textarea:focus-visible {
 }
 
 .formulario-gerar-plano .botao-salvar {
-    grid-column: 3;
+    grid-column: 4;
     grid-row: 1 / 3;
     margin: 0;
 }
@@ -3084,6 +3131,23 @@ textarea:focus-visible {
     font-size: 12px;
 }
 
+.tarefas-atrasadas {
+    padding: 15px;
+    border: 1px solid #f3c5cd;
+    border-radius: 12px;
+    background: #fff1f3;
+    color: #a83249;
+    font-size: 12px;
+}
+
+.tarefas-atrasadas ul {
+    display: grid;
+    gap: 5px;
+    margin: 10px 0 0;
+    padding-left: 20px;
+}
+
+
 .tarefas-sem-tempo ul {
     display: grid;
     gap: 5px;
@@ -3300,6 +3364,7 @@ textarea:focus-visible {
 .registro-manual-estudo > .botao-salvar { justify-self: center; }
 .frase-motivacional-manual { display: grid; justify-items: center; gap: 8px; margin-top: auto; padding: 18px 14px 4px; color: #8064ad; text-align: center; }
 .estrela-frase { color: #9b70e9; font-size: 20px; }
+.frase-motivacional-manual h3 { margin: 0; color: var(--roxo-escuro); font-family: 'Manrope',sans-serif; font-size: 14px; }
 .frase-motivacional-manual p { max-width: 290px; margin: 0; font-family: 'Manrope',sans-serif; font-size: 13px; font-weight: 600; line-height: 1.55; }
 .frase-motivacional-manual button { padding: 6px 10px; border: 0; border-radius: 7px; background: transparent; color: var(--roxo); font-size: 10px; font-weight: 700; }
 .frase-motivacional-manual button:hover { background: #f5efff; }
@@ -3707,4 +3772,86 @@ textarea:focus-visible {
 
 :root[data-theme="escuro"] .cartao-autenticacao {
     box-shadow: 0 18px 55px #0004;
+}
+
+.notificacao-app {
+    position: fixed;
+    right: 24px;
+    bottom: 24px;
+    z-index: 1500;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    width: max-content;
+    max-width: min(440px, calc(100vw - 32px));
+    padding: 14px 16px;
+    border: 1px solid;
+    border-radius: 12px;
+    background: #fff;
+    font-size: 13px;
+    line-height: 1.5;
+    box-shadow: 0 10px 30px #24163a24;
+    animation: entrada-notificacao .2s ease-out;
+}
+
+.notificacao-app.erro {
+    border-color: #f2c4cc;
+    background: #fff4f5;
+    color: #a83249;
+}
+
+.notificacao-app.sucesso {
+    border-color: #ccebd8;
+    background: #f0fbf4;
+    color: #287747;
+}
+
+.notificacao-app button {
+    flex: 0 0 auto;
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    border: 0;
+    border-radius: 6px;
+    background: transparent;
+    color: currentColor;
+    font-size: 19px;
+    line-height: 1;
+}
+
+.notificacao-app button:hover {
+    background: #0000000d;
+}
+
+@keyframes entrada-notificacao {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+:root[data-theme="escuro"] .notificacao-app {
+    border-color: #443b50;
+    background: #282231;
+    color: #eeeaf5;
+}
+
+:root[data-theme="escuro"] .notificacao-app.erro {
+    border-color: #71404d;
+    background: #38232a;
+    color: #ffc2cc;
+}
+
+:root[data-theme="escuro"] .notificacao-app.sucesso {
+    border-color: #375d47;
+    background: #203329;
+    color: #b9edca;
+}
+
+@media (max-width: 600px) {
+    .notificacao-app {
+        right: 16px;
+        bottom: 16px;
+        left: 16px;
+        width: auto;
+        max-width: none;
+    }
 }

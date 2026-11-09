@@ -99,6 +99,12 @@ export class RepositorioSessoesEstudo {
                 "UPDATE tarefas SET tempo_estudado = LEAST(duracao_estimada, tempo_estudado + ?) WHERE id = ? AND usuario_id = ?",
                 [Math.floor(dados.duracaoSegundos / 60), dados.tarefaId, usuarioId]
             );
+            if (dados.planoSessaoId) {
+                await conn.execute(
+                    "UPDATE tarefas SET estado = 'concluida' WHERE id = ? AND usuario_id = ?",
+                    [dados.tarefaId, usuarioId]
+                );
+            }
             await conn.commit();
             const [linhas] = await conexao.execute<SessaoBanco[]>(
                 `SELECT s.id, s.tarefa_id, t.titulo, s.inicio, s.fim,

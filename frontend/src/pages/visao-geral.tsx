@@ -5,6 +5,7 @@ import { useAutenticacao } from "../contexto/AutenticacaoContexto";
 import { atualizarPerfil, type DadosPerfil } from "../services/autenticacao";
 import { listarDisciplinas } from "../services/disciplinas";
 import { listarTarefas } from "../services/tarefas";
+import NotificacaoTemporaria from "../components/notificacao-temporaria";
 
 function VisaoGeral() {
     const { usuario, definirUsuario } = useAutenticacao();
@@ -156,11 +157,7 @@ function VisaoGeral() {
                     </div>
                 </div>
 
-                {erroResumo && (
-                    <p className="mensagem-erro" role="status">
-                        {erroResumo}
-                    </p>
-                )}
+                {erroResumo && <NotificacaoTemporaria mensagem={erroResumo} tipo="erro" />}
 
                 <div className="grade-resumo">
                     <article className="cartao-resumo">
@@ -233,7 +230,7 @@ function VisaoGeral() {
                         <h2 id="titulo-perfil">Dados pessoais</h2>
                         <p className="descricao-modal-perfil">Atualize suas informações e seu espaço de estudos.</p>
 
-                        {erroPerfil && <p className="mensagem-erro" role="alert">{erroPerfil}</p>}
+                        {erroPerfil && <NotificacaoTemporaria mensagem={erroPerfil} tipo="erro" />}
 
                         <form className="formulario-perfil" onSubmit={(evento) => void salvarPerfil(evento)}>
                             <label htmlFor="perfil-nome">Nome completo</label>

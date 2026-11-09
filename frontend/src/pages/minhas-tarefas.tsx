@@ -14,6 +14,7 @@ import {
     listarDisciplinas,
     type Disciplina
 } from "../services/disciplinas";
+import NotificacaoTemporaria from "../components/notificacao-temporaria";
 
 type FiltroTarefa =
     | "todas"
@@ -527,7 +528,7 @@ function MinhasTarefas() {
                         required
                     />
 
-                    {erro && <p className="mensagem-erro">{erro}</p>}
+                    {erro && <NotificacaoTemporaria mensagem={erro} tipo="erro" />}
 
                     <div className="botoes-formulario">
                         <button
@@ -553,14 +554,10 @@ function MinhasTarefas() {
                 </form>
             )}
 
-            {sucesso && (
-                <p className="aviso-conclusao" role="status" aria-live="polite">
-                    {sucesso}
-                </p>
-            )}
+            {sucesso && <NotificacaoTemporaria mensagem={sucesso} tipo="sucesso" />}
 
             {erro && !mostrarFormulario && (
-                <p className="mensagem-erro">{erro}</p>
+                <NotificacaoTemporaria mensagem={erro} tipo="erro" />
             )}
 
             <div className="titulo-secao secao-lista-tarefas">
@@ -792,12 +789,6 @@ function MinhasTarefas() {
                                 <small>Duração estimada</small>
                                 <strong>
                                     {tarefaSelecionada.duracaoEstimada} minutos
-                                </strong>
-                            </div>
-                            <div>
-                                <small>Tempo estudado</small>
-                                <strong>
-                                    {tarefaSelecionada.tempoEstudado} minutos
                                 </strong>
                             </div>
                             <div>

@@ -108,4 +108,65 @@ describe("GeradorPlanejamento", () => {
         expect(resultado.sessoes).toHaveLength(0);
         expect(resultado.tarefasSemTempo).toHaveLength(0);
     });
+
+    it("deve ignorar horários que já terminaram", () => {
+        const resultado = gerador.gerar(
+            [criarTarefa("6", 30)],
+            [{
+                inicio: new Date("2026-10-20T07:00:00"),
+                fim: new Date("2026-10-20T08:00:00")
+            }],
+            dataAtual
+        );
+
+        expect(resultado.sessoes).toHaveLength(0);
+        expect(resultado.tarefasSemTempo).toContain("6");
+    });
+
+    it("deve aproveitar o restante do intervalo para a próxima tarefa", () => {
+        const resultado = gerador.gerar(
+            [criarTarefa("7", 60), criarTarefa("8", 30)],
+            [{
+                inicio: new Date("2026-10-20T09:00:00"),
+                fim: new Date("2026-10-20T10:30:00")
+            }],
+            dataAtual
+        );
+
+        expect(resultado.sessoes).toHaveLength(2);
+        expect(resultado.tarefasSemTempo).toHaveLength(0);
+        expect(resultado.sessoes[1].inicio.getTime()).toBeGreaterThanOrEqual(
+            resultado.sessoes[0].fim.getTime()
+        );
+    });
+
+    it("deve priorizar a tarefa com prazo mais próximo antes de usar os horários", () => {
+        const prazoProximo = criarTarefa("9", 60, new Date("2026-10-20T10:00:00"));
+        const prazoDistante = criarTarefa("10", 60, new Date("2026-10-25T12:00:00"));
+        const resultado = gerador.gerar(
+            [prazoDistante, prazoProximo],
+            [{
+                inicio: new Date("2026-10-20T09:00:00"),
+                fim: new Date("2026-10-20T11:00:00")
+            }],
+            dataAtual
+        );
+
+        expect(resultado.sessoes[0].tarefaId).toBe("9");
+    });
+
+    it("não deve agendar uma sessão depois do prazo, mesmo que o horário continue livre", () => {
+        const tarefa = criarTarefa("11", 60, new Date("2026-10-20T09:30:00"));
+        const resultado = gerador.gerar(
+            [tarefa],
+            [{
+                inicio: new Date("2026-10-20T10:00:00"),
+                fim: new Date("2026-10-20T12:00:00")
+            }],
+            dataAtual
+        );
+
+        expect(resultado.sessoes).toHaveLength(0);
+        expect(resultado.tarefasSemTempo).toContain("11");
+    });
 });

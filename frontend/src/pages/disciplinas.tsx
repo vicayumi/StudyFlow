@@ -7,6 +7,7 @@ import {
     excluirDisciplina,
     type Disciplina
 } from "../services/disciplinas";
+import NotificacaoTemporaria from "../components/notificacao-temporaria";
 
 function Disciplinas() {
     const [disciplinas, setDisciplinas] = useState<Disciplina[]>([]);
@@ -162,7 +163,7 @@ function Disciplinas() {
                         </div>
 
                         {erroFormulario && (
-                            <p className="mensagem-erro">{erroFormulario}</p>
+                            <NotificacaoTemporaria mensagem={erroFormulario} tipo="erro" />
                         )}
 
                         <div className="botoes-formulario">
@@ -181,7 +182,7 @@ function Disciplinas() {
                 )}
 
                 {carregando && <p>Carregando disciplinas...</p>}
-                {!carregando && erro && <p className="mensagem-erro">{erro}</p>}
+                {!carregando && erro && <NotificacaoTemporaria mensagem={erro} tipo="erro" />}
 
                 {!carregando && !erro && disciplinas.length === 0 && (
                     <p className="mensagem-vazia">

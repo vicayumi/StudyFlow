@@ -41,6 +41,7 @@ export interface EstrategiaPlanejamento {
 export interface TarefaSemTempo {
     id: string;
     titulo: string;
+    diasAtraso?: number;
 }
 
 export interface PlanoSemanal {
@@ -102,10 +103,14 @@ export function listarSessoesCalendario(ano: number, mes: number): Promise<Sessa
     return requisicaoApi<SessaoPlanejada[]>(`/planejamento/calendario?ano=${ano}&mes=${mes}`);
 }
 
-export function gerarPlanoSemanal(dataInicio: string, estrategia: string): Promise<PlanoSemanal> {
+export function gerarPlanoSemanal(
+    dataInicio: string,
+    estrategia: string,
+    incluirTarefasFuturas: boolean
+): Promise<PlanoSemanal> {
     return requisicaoApi<PlanoSemanal>("/planejamento/gerar", {
         method: "POST",
         headers: CABECALHOS_JSON,
-        body: JSON.stringify({ dataInicio, estrategia })
+        body: JSON.stringify({ dataInicio, estrategia, incluirTarefasFuturas })
     });
 }

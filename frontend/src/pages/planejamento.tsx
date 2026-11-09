@@ -15,6 +15,7 @@ import {
     type SessaoPlanejada
 } from "../services/planejamento";
 import { concluirSessaoPlanejada } from "../services/sessoes-estudo";
+import NotificacaoTemporaria from "../components/notificacao-temporaria";
 
 const DIAS_DA_SEMANA = [
     "Domingo",
@@ -50,6 +51,7 @@ function Planejamento() {
     const [plano, setPlano] = useState<PlanoSemanal | null>(null);
     const [estrategias, setEstrategias] = useState<EstrategiaPlanejamento[]>([]);
     const [estrategiaSelecionada, setEstrategiaSelecionada] = useState("combinada");
+    const [incluirTarefasFuturas, setIncluirTarefasFuturas] = useState(true);
     const [sessoesCalendario, setSessoesCalendario] = useState<SessaoPlanejada[]>([]);
     const [mesCalendario, setMesCalendario] = useState(() => new Date());
     const [diaSelecionado, setDiaSelecionado] = useState(dataLocalAtual());
@@ -177,14 +179,18 @@ function Planejamento() {
 
     async function gerarPlano(evento: React.FormEvent<HTMLFormElement>) {
         evento.preventDefault();
+        const reorganizando = plano !== null;
         setErro("");
         setSucesso("");
         setGerandoPlano(true);
 
         try {
-            const novoPlano = await gerarPlanoSemanal(dataInicio, estrategiaSelecionada);
+            const novoPlano = await gerarPlanoSemanal(dataInicio, estrategiaSelecionada, incluirTarefasFuturas);
             setPlano(novoPlano);
             setEstrategiaSelecionada(novoPlano.estrategia);
+            if (reorganizando) {
+                setSucesso("Plano reorganizado. As sessões concluídas saíram do calendário e continuam no seu histórico de estudo.");
+            }
 
             const dataEmFoco = novoPlano.sessoes[0]?.inicio ?? `${dataInicio}T12:00:00`;
             const dataLocal = new Date(dataEmFoco);
@@ -215,7 +221,7 @@ function Planejamento() {
             await Promise.all([
                 listarSessoesCalendario(mesCalendario.getFullYear(), mesCalendario.getMonth() + 1).then(setSessoesCalendario)
             ]);
-            setSucesso("Sessão concluída e tempo de estudo registrado.");
+            setSucesso("Tarefa concluída. O status foi atualizado nas outras abas.");
         } catch (falha) {
             setErro(falha instanceof Error ? falha.message : "Não foi possível concluir a sessão.");
         } finally {
@@ -289,8 +295,8 @@ function Planejamento() {
                 </div>
             </header>
 
-            {erro && <p className="mensagem-erro" role="alert">{erro}</p>}
-            {sucesso && <p className="aviso-planejamento" role="status">{sucesso}</p>}
+            <NotificacaoTemporaria mensagem={erro} tipo="erro" />
+            <NotificacaoTemporaria mensagem={sucesso} tipo="sucesso" />
 
             <section className="cartao-planejamento">
                 <div className="titulo-secao">
@@ -420,8 +426,19 @@ function Planejamento() {
                             <option value={estrategia.id} key={estrategia.id}>{estrategia.nome}</option>
                         ))}
                     </select>
+                    <label htmlFor="escopo-plano">Quais tarefas incluir?</label>
+                    <select
+                        id="escopo-plano"
+                        value={incluirTarefasFuturas ? "adiantar" : "semana"}
+                        onChange={(evento) => setIncluirTarefasFuturas(evento.target.value === "adiantar")}
+                    >
+                        <option value="semana">Só tarefas com prazo nos próximos 7 dias</option>
+                        <option value="adiantar">Incluir tarefas futuras para adiantar</option>
+                    </select>
                     <button type="submit" className="botao-salvar" disabled={gerandoPlano}>
-                        {gerandoPlano ? "Montando e salvando..." : "Gerar plano semanal"}
+                        {gerandoPlano
+                            ? plano ? "Reorganizando plano..." : "Montando e salvando..."
+                            : plano ? "Reorganizar plano" : "Gerar plano semanal"}
                     </button>
                 </form>
 
@@ -530,7 +547,7 @@ function Planejamento() {
                                                         <small className="sessao-ja-concluida">✓ Sessão concluída</small>
                                                     ) : (
                                                         <button type="button" className="botao-concluir-sessao" disabled={sessoesConcluindo.includes(sessao.id)} onClick={() => void marcarSessaoConcluida(sessao)}>
-                                                            {sessoesConcluindo.includes(sessao.id) ? "Salvando..." : "Marcar como concluída"}
+                                                            {sessoesConcluindo.includes(sessao.id) ? "Salvando..." : "Concluir tarefa e sessão"}
                                                         </button>
                                                     )}
                                                 </article>
@@ -541,12 +558,22 @@ function Planejamento() {
                                 </section>
                             </div>
 
-                        {plano && plano.tarefasSemTempo.length > 0 && (
+                        {plano && plano.tarefasSemTempo.some((tarefa) => tarefa.diasAtraso === undefined) && (
                             <div className="tarefas-sem-tempo">
                                 <strong>Sem tempo suficiente nesta semana</strong>
                                 <ul>
-                                    {plano.tarefasSemTempo.map((tarefa) => (
+                                    {plano.tarefasSemTempo.filter((tarefa) => tarefa.diasAtraso === undefined).map((tarefa) => (
                                         <li key={tarefa.id}>{tarefa.titulo}</li>
+                                    ))}
+                                </ul>
+                            </div>
+                        )}
+                        {plano && plano.tarefasSemTempo.some((tarefa) => tarefa.diasAtraso !== undefined) && (
+                            <div className="tarefas-atrasadas">
+                                <strong>Prazo vencido</strong>
+                                <ul>
+                                    {plano.tarefasSemTempo.filter((tarefa) => tarefa.diasAtraso !== undefined).map((tarefa) => (
+                                        <li key={tarefa.id}>{tarefa.titulo} está atrasada há {tarefa.diasAtraso} {tarefa.diasAtraso === 1 ? "dia" : "dias"}.</li>
                                     ))}
                                 </ul>
                             </div>

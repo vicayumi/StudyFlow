@@ -212,8 +212,10 @@ export class ControladorPlanejamento {
             resposta.status(400).json({ erro: "Selecione uma estratégia de prioridade válida." });
             return;
         }
+        const incluirTarefasFuturas = requisicao.body?.incluirTarefasFuturas !== false;
 
         try {
+            const chaveSemana = this.formatarDataLocal(dataInicio.data);
             const [horarios, tarefasSalvas] = await Promise.all([
                 this.repositorioHorarios.listar(requisicao.usuarioId!),
                 this.repositorioTarefas.listarTodas(requisicao.usuarioId!)
@@ -244,9 +246,15 @@ export class ControladorPlanejamento {
                 dataInicio.data
             );
             const dataAtual = new Date();
+            const fimSemana = new Date(dataInicio.data);
+            fimSemana.setDate(fimSemana.getDate() + DIAS_DA_SEMANA - 1);
+            fimSemana.setHours(23, 59, 59, 999);
+            const tarefasDoPlano = incluirTarefasFuturas
+                ? tarefas
+                : tarefas.filter((tarefa) => tarefa.dataPrazo <= fimSemana);
             const gerador = new GeradorPlanejamento(estrategia.instancia);
             const resultado = gerador.gerar(
-                tarefas,
+                tarefasDoPlano,
                 intervalos,
                 dataAtual
             );
@@ -258,7 +266,7 @@ export class ControladorPlanejamento {
                 ...item,
                 titulo: titulosPorId.get(item.tarefaId) ?? "Tarefa"
             }));
-            const sessoes = resultado.sessoes
+            const sessoesNovas = resultado.sessoes
                 .map((sessao) => {
                     const prioridade = prioridadesPorId.get(sessao.tarefaId);
                     return {
@@ -273,12 +281,18 @@ export class ControladorPlanejamento {
                     };
                 })
                 .sort((a, b) => new Date(a.inicio).getTime() - new Date(b.inicio).getTime());
-            const tarefasSemTempo = resultado.tarefasSemTempo.map((id) => ({
-                id,
-                titulo: titulosPorId.get(id) ?? "Tarefa"
-            }));
+            const sessoes = sessoesNovas;
+            const tarefasSemTempo = resultado.tarefasSemTempo.map((id) => {
+                const tarefa = tarefas.find((item) => item.id === id);
+                const atrasoMs = tarefa ? dataAtual.getTime() - tarefa.dataPrazo.getTime() : 0;
+                return {
+                    id,
+                    titulo: titulosPorId.get(id) ?? "Tarefa",
+                    ...(atrasoMs > 0 ? { diasAtraso: Math.max(1, Math.ceil(atrasoMs / 86400000)) } : {})
+                };
+            });
             const dadosPlano = {
-                dataInicio: this.formatarDataLocal(dataInicio.data),
+                dataInicio: chaveSemana,
                 estrategia: estrategia.id,
                 sessoes,
                 prioridades,
