@@ -122,4 +122,7 @@ export async function prepararBanco(): Promise<void> {
             await conexao.query(`ALTER TABLE \`${tabela}\` ADD INDEX \`${nomeIndice}\` (usuario_id)`);
         }
     }
+
+    // Corrige registros legados que poderiam fazer a listagem inteira falhar.
+    await conexao.query("UPDATE tarefas SET duracao_estimada = 1 WHERE duracao_estimada < 1");
 }

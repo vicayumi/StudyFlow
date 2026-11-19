@@ -15,26 +15,56 @@ import {
     type Disciplina
 } from "../services/disciplinas";
 import NotificacaoTemporaria from "../components/notificacao-temporaria";
+import { useAutenticacao } from "../contexto/AutenticacaoContexto";
 
 type FiltroTarefa =
     | "todas"
     | "pendente"
     | "concluida";
 
+interface RascunhoTarefa {
+    formulario: DadosNovaTarefa;
+    duracaoDigitada: string;
+    pesoDigitado: string;
+    modoEdicao: boolean;
+    tarefaId: string | null;
+    filtro: FiltroTarefa;
+}
+
+function lerRascunhoTarefa(chave: string): RascunhoTarefa | null {
+    try {
+        const salvo = sessionStorage.getItem(chave);
+        if (!salvo) return null;
+        const rascunho: unknown = JSON.parse(salvo);
+        if (typeof rascunho !== "object" || rascunho === null || !("formulario" in rascunho)) return null;
+        const formulario = rascunho.formulario;
+        if (typeof formulario !== "object" || formulario === null) return null;
+        return rascunho as RascunhoTarefa;
+    } catch {
+        return null;
+    }
+}
+
 function MinhasTarefas() {
+    const { usuario } = useAutenticacao();
+    const chaveRascunho = `studyflow:rascunho-tarefa:${usuario?.id ?? "conta"}`;
+    const [rascunhoInicial] = useState(() => lerRascunhoTarefa(chaveRascunho));
     const [tarefas, setTarefas] = useState<Tarefa[]>([]);
     const [disciplinas, setDisciplinas] = useState<Disciplina[]>([]);
     const [carregando, setCarregando] = useState(true);
     const [salvando, setSalvando] = useState(false);
-    const [mostrarFormulario, setMostrarFormulario] = useState(false);
+    const [mostrarFormulario, setMostrarFormulario] = useState(Boolean(rascunhoInicial));
     const [erro, setErro] = useState("");
     const [sucesso, setSucesso] = useState("");
-    const [filtro, setFiltro] = useState<FiltroTarefa>("todas");
+    const [filtro, setFiltro] = useState<FiltroTarefa>(rascunhoInicial?.filtro ?? "todas");
     const [tarefaSelecionada, setTarefaSelecionada] =
         useState<Tarefa | null>(null);
-    const [modoEdicao, setModoEdicao] = useState(false);
+    const [modoEdicao, setModoEdicao] = useState(rascunhoInicial?.modoEdicao ?? false);
+    const [tarefaEditadaId, setTarefaEditadaId] = useState<string | null>(rascunhoInicial?.tarefaId ?? null);
+    const [duracaoDigitada, setDuracaoDigitada] = useState(rascunhoInicial?.duracaoDigitada ?? "60");
+    const [pesoDigitado, setPesoDigitado] = useState(rascunhoInicial?.pesoDigitado ?? "0");
 
-    const [formulario, setFormulario] = useState<DadosNovaTarefa>({
+    const [formulario, setFormulario] = useState<DadosNovaTarefa>(rascunhoInicial?.formulario ?? {
         disciplinaId: "",
         titulo: "",
         descricao: "",
@@ -44,45 +74,74 @@ function MinhasTarefas() {
         pesoAvaliacao: 0
     });
 
-    async function carregarDados() {
+    async function carregarDados(): Promise<string | null> {
         setCarregando(true);
         setErro("");
 
-        try {
-            const [tarefasCarregadas, disciplinasCarregadas] =
-                await Promise.all([
-                    listarTarefas(),
-                    listarDisciplinas()
-                ]);
+        const [resultadoTarefas, resultadoDisciplinas] = await Promise.allSettled([
+            listarTarefas(),
+            listarDisciplinas()
+        ]);
+        const erros: string[] = [];
 
+        if (resultadoTarefas.status === "fulfilled") {
+            const tarefasCarregadas = resultadoTarefas.value;
             setTarefas(tarefasCarregadas);
-            setDisciplinas(disciplinasCarregadas);
-
             setTarefaSelecionada((selecionada) => {
-                if (!selecionada) {
-                    return null;
-                }
+                const id = selecionada?.id ?? tarefaEditadaId;
+                if (!id) return null;
 
                 return (
                     tarefasCarregadas.find(
-                        (tarefa) => tarefa.id === selecionada.id
+                        (tarefa) => tarefa.id === id
                     ) ?? null
                 );
             });
-        } catch (erro) {
-            setErro(
-                erro instanceof Error
-                    ? erro.message
-                    : "Não foi possível carregar os dados."
-            );
-        } finally {
-            setCarregando(false);
         }
+
+        if (resultadoTarefas.status === "rejected") {
+            erros.push(resultadoTarefas.reason instanceof Error
+                ? resultadoTarefas.reason.message
+                : "Não foi possível carregar as tarefas.");
+        }
+
+        if (resultadoDisciplinas.status === "fulfilled") {
+            setDisciplinas(resultadoDisciplinas.value);
+        } else {
+            erros.push(resultadoDisciplinas.reason instanceof Error
+                ? resultadoDisciplinas.reason.message
+                : "Não foi possível carregar as disciplinas.");
+        }
+
+        if (erros.length > 0) {
+            const mensagem = erros.join(" ");
+            setErro(mensagem);
+            setCarregando(false);
+            return mensagem;
+        }
+        setCarregando(false);
+        return null;
     }
 
     useEffect(() => {
         carregarDados();
     }, []);
+
+    useEffect(() => {
+        if (!mostrarFormulario) {
+            sessionStorage.removeItem(chaveRascunho);
+            return;
+        }
+        const rascunho: RascunhoTarefa = {
+            formulario,
+            duracaoDigitada,
+            pesoDigitado,
+            modoEdicao,
+            tarefaId: tarefaEditadaId,
+            filtro
+        };
+        sessionStorage.setItem(chaveRascunho, JSON.stringify(rascunho));
+    }, [chaveRascunho, mostrarFormulario, formulario, duracaoDigitada, pesoDigitado, modoEdicao, tarefaEditadaId, filtro]);
 
     useEffect(() => {
         if (!sucesso) {
@@ -120,7 +179,10 @@ function MinhasTarefas() {
 
     function abrirCadastro() {
         setFormulario(formularioVazio());
+        setDuracaoDigitada("60");
+        setPesoDigitado("0");
         setTarefaSelecionada(null);
+        setTarefaEditadaId(null);
         setModoEdicao(false);
         setMostrarFormulario(true);
         setErro("");
@@ -137,8 +199,11 @@ function MinhasTarefas() {
             duracaoEstimada: tarefa.duracaoEstimada,
             pesoAvaliacao: tarefa.pesoAvaliacao
         });
+        setDuracaoDigitada(String(tarefa.duracaoEstimada));
+        setPesoDigitado(String(tarefa.pesoAvaliacao));
 
         setTarefaSelecionada(tarefa);
+        setTarefaEditadaId(tarefa.id);
         setModoEdicao(true);
         setMostrarFormulario(true);
         setErro("");
@@ -148,8 +213,25 @@ function MinhasTarefas() {
     function cancelarFormulario() {
         setMostrarFormulario(false);
         setModoEdicao(false);
+        setTarefaEditadaId(null);
         setErro("");
     }
+
+    useEffect(() => {
+        if (!mostrarFormulario) return;
+
+        const overflowAnterior = document.body.style.overflow;
+        document.body.style.overflow = "hidden";
+        const tratarTecla = (evento: KeyboardEvent) => {
+            if (evento.key === "Escape" && !salvando) cancelarFormulario();
+        };
+        window.addEventListener("keydown", tratarTecla);
+
+        return () => {
+            document.body.style.overflow = overflowAnterior;
+            window.removeEventListener("keydown", tratarTecla);
+        };
+    }, [mostrarFormulario, salvando]);
 
     async function salvarTarefa(
         evento: React.FormEvent<HTMLFormElement>
@@ -158,8 +240,24 @@ function MinhasTarefas() {
         setErro("");
         setSucesso("");
 
-        if (!formulario.disciplinaId) {
+        const dadosFormulario: DadosNovaTarefa = {
+            ...formulario,
+            duracaoEstimada: Number(duracaoDigitada),
+            pesoAvaliacao: Number(pesoDigitado)
+        };
+
+        if (!dadosFormulario.disciplinaId) {
             setErro("Selecione uma disciplina.");
+            return;
+        }
+
+        if (!Number.isInteger(dadosFormulario.duracaoEstimada) || dadosFormulario.duracaoEstimada < 1) {
+            setErro("A duração estimada precisa ser de pelo menos 1 minuto.");
+            return;
+        }
+
+        if (!Number.isFinite(dadosFormulario.pesoAvaliacao) || dadosFormulario.pesoAvaliacao < 0 || dadosFormulario.pesoAvaliacao > 100) {
+            setErro("O peso da avaliação deve estar entre 0 e 100%.");
             return;
         }
 
@@ -167,15 +265,21 @@ function MinhasTarefas() {
 
         try {
             if (modoEdicao && tarefaSelecionada) {
-                await editarTarefa(tarefaSelecionada.id, formulario);
+                await editarTarefa(tarefaSelecionada.id, dadosFormulario);
             } else {
-                await criarTarefa(formulario);
+                await criarTarefa(dadosFormulario);
                 setFiltro("todas");
             }
 
             setMostrarFormulario(false);
             setModoEdicao(false);
-            await carregarDados();
+            setTarefaEditadaId(null);
+            const erroAoAtualizarLista = await carregarDados();
+            if (erroAoAtualizarLista) {
+                setErro(`A tarefa foi salva, mas não consegui atualizar a lista. ${erroAoAtualizarLista}`);
+            } else {
+                setSucesso(modoEdicao ? "Tarefa atualizada com sucesso!" : "Tarefa cadastrada com sucesso!");
+            }
         } catch (erro) {
             setErro(
                 erro instanceof Error
@@ -197,8 +301,9 @@ function MinhasTarefas() {
 
         try {
             await concluirTarefa(tarefa.id);
-            await carregarDados();
-            setSucesso("Tarefa concluída com sucesso!");
+            const erroLista = await carregarDados();
+            if (erroLista) setErro(`Tarefa concluída, mas não consegui atualizar a lista. ${erroLista}`);
+            else setSucesso("Tarefa concluída com sucesso!");
         } catch (erro) {
             setErro(
                 erro instanceof Error
@@ -216,8 +321,9 @@ function MinhasTarefas() {
             await reabrirTarefaApi(tarefa.id);
             setTarefaSelecionada(null);
             setFiltro("pendente");
-            await carregarDados();
-            setSucesso("Tarefa reaberta com sucesso!");
+            const erroLista = await carregarDados();
+            if (erroLista) setErro(`Tarefa reaberta, mas não consegui atualizar a lista. ${erroLista}`);
+            else setSucesso("Tarefa reaberta com sucesso!");
         } catch (erro) {
             setErro(
                 erro instanceof Error
@@ -236,8 +342,9 @@ function MinhasTarefas() {
             setTarefaSelecionada(null);
             setMostrarFormulario(false);
             setModoEdicao(false);
-            await carregarDados();
-            setSucesso("Tarefa excluída com sucesso!");
+            const erroLista = await carregarDados();
+            if (erroLista) setErro(`Tarefa excluída, mas não consegui atualizar a lista. ${erroLista}`);
+            else setSucesso("Tarefa excluída com sucesso!");
         } catch (erro) {
             setErro(
                 erro instanceof Error
@@ -395,19 +502,35 @@ function MinhasTarefas() {
             </div>
 
             {mostrarFormulario && (
-                <form
-                    className="formulario-disciplina"
-                    onSubmit={salvarTarefa}
-                >
-                    <h3>
-                        {modoEdicao ? "Editar tarefa" : "Nova tarefa"}
-                    </h3>
-
-                    <p>
-                        {modoEdicao
-                            ? "Altere os dados da atividade."
-                            : "Preencha os dados da atividade que deseja cadastrar."}
-                    </p>
+                <div className="modal-formulario-overlay">
+                    <form
+                        className="formulario-disciplina modal-formulario-card"
+                        onSubmit={salvarTarefa}
+                        role="dialog"
+                        aria-modal="true"
+                        aria-labelledby="titulo-modal-tarefa"
+                    >
+                    <header className="cabecalho-modal-formulario">
+                        <div>
+                            <h3 id="titulo-modal-tarefa">
+                                {modoEdicao ? "Editar tarefa" : "Nova tarefa"}
+                            </h3>
+                            <p>
+                                {modoEdicao
+                                    ? "Altere os dados da atividade."
+                                    : "Preencha os dados da atividade que deseja cadastrar."}
+                            </p>
+                        </div>
+                        <button
+                            className="botao-fechar-modal-formulario"
+                            type="button"
+                            onClick={cancelarFormulario}
+                            aria-label="Fechar formulário de tarefa"
+                            disabled={salvando}
+                        >
+                            ×
+                        </button>
+                    </header>
 
                     <label htmlFor="titulo">Título da tarefa</label>
                     <input
@@ -498,15 +621,17 @@ function MinhasTarefas() {
                     </label>
                     <input
                         id="duracao"
-                        type="number"
-                        min={1}
-                        value={formulario.duracaoEstimada}
-                        onChange={(evento) =>
-                            atualizarCampo(
-                                "duracaoEstimada",
-                                Number(evento.target.value)
-                            )
-                        }
+                        type="text"
+                        inputMode="numeric"
+                        pattern="[1-9][0-9]*"
+                        value={duracaoDigitada}
+                        onChange={(evento) => {
+                            const valorNormalizado = evento.currentTarget.value
+                                .replace(/\D/g, "")
+                                .replace(/^0+(?=\d)/, "");
+                            setDuracaoDigitada(valorNormalizado);
+                            atualizarCampo("duracaoEstimada", Number(valorNormalizado) || 0);
+                        }}
                         required
                     />
 
@@ -515,16 +640,24 @@ function MinhasTarefas() {
                     </label>
                     <input
                         id="peso"
-                        type="number"
-                        min={0}
-                        max={100}
-                        value={formulario.pesoAvaliacao}
-                        onChange={(evento) =>
-                            atualizarCampo(
-                                "pesoAvaliacao",
-                                Number(evento.target.value)
-                            )
-                        }
+                        type="text"
+                        inputMode="numeric"
+                        pattern="100|[1-9]?[0-9]"
+                        maxLength={3}
+                        value={pesoDigitado}
+                        onChange={(evento) => {
+                            const valorSemZeros = evento.currentTarget.value
+                                .replace(/\D/g, "")
+                                .replace(/^0+(?=\d)/, "")
+                                .slice(0, 3);
+                            setPesoDigitado(valorSemZeros);
+                            atualizarCampo("pesoAvaliacao", Number(valorSemZeros) || 0);
+                        }}
+                        onBlur={(evento) => {
+                            const pesoNormalizado = String(Number(evento.currentTarget.value) || 0);
+                            setPesoDigitado(pesoNormalizado);
+                            atualizarCampo("pesoAvaliacao", Number(pesoNormalizado));
+                        }}
                         required
                     />
 
@@ -551,7 +684,8 @@ function MinhasTarefas() {
                             Cancelar
                         </button>
                     </div>
-                </form>
+                    </form>
+                </div>
             )}
 
             {sucesso && <NotificacaoTemporaria mensagem={sucesso} tipo="sucesso" />}

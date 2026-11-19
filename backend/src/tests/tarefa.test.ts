@@ -68,14 +68,14 @@ describe("Classe Tarefa", () => {
         expect(tarefa.obterEstado()).toBe("pendente");
     });
 
-    it("não deve permitir registrar mais tempo que o restante", () => {
+    it("permite que o tempo real ultrapasse a duração estimada sem concluir a tarefa", () => {
         const tarefa = criarTarefa();
 
-        expect(() => {
-            tarefa.registrarTempoEstudado(121);
-        }).toThrow(
-            "O tempo registrado não pode ultrapassar o tempo restante."
-        );
+        tarefa.registrarTempoEstudado(121);
+
+        expect(tarefa.obterTempoEstudado()).toBe(121);
+        expect(tarefa.obterTempoRestante()).toBe(0);
+        expect(tarefa.obterEstado()).toBe("pendente");
     });
 
     it("não deve permitir registrar tempo negativo", () => {

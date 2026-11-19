@@ -93,12 +93,7 @@ export class Tarefa {
             );
         }
 
-        if (minutos > this.obterTempoRestante()) {
-            throw new Error(
-                "O tempo registrado não pode ultrapassar o tempo restante."
-            );
-        }
-
+        // A duração estimada é apenas uma previsão; o tempo real pode passar dela.
         this.tempoEstudado += minutos;
     }
 

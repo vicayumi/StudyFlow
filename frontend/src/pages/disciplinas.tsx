@@ -37,6 +37,22 @@ function Disciplinas() {
         void carregar();
     }, []);
 
+    useEffect(() => {
+        if (!formularioAberto) return;
+
+        const overflowAnterior = document.body.style.overflow;
+        document.body.style.overflow = "hidden";
+        const tratarTecla = (evento: KeyboardEvent) => {
+            if (evento.key === "Escape" && !salvando) fecharFormulario();
+        };
+        window.addEventListener("keydown", tratarTecla);
+
+        return () => {
+            document.body.style.overflow = overflowAnterior;
+            window.removeEventListener("keydown", tratarTecla);
+        };
+    }, [formularioAberto, salvando]);
+
     function abrirCadastro() {
         setDisciplinaEditando(null);
         setNome("");
@@ -51,6 +67,13 @@ function Disciplinas() {
         setCor(disciplina.cor);
         setErroFormulario("");
         setFormularioAberto(true);
+    }
+
+    function fecharFormulario() {
+        if (salvando) return;
+        setFormularioAberto(false);
+        setDisciplinaEditando(null);
+        setErroFormulario("");
     }
 
     async function salvar(evento: React.FormEvent<HTMLFormElement>) {
@@ -137,8 +160,29 @@ function Disciplinas() {
                 </div>
 
                 {formularioAberto && (
-                    <form className="formulario-disciplina" onSubmit={salvar}>
-                        <h3>{disciplinaEditando ? "Editar disciplina" : "Nova disciplina"}</h3>
+                    <div className="modal-formulario-overlay">
+                    <form
+                        className="formulario-disciplina modal-formulario-card"
+                        onSubmit={salvar}
+                        role="dialog"
+                        aria-modal="true"
+                        aria-labelledby="titulo-modal-disciplina"
+                    >
+                        <header className="cabecalho-modal-formulario">
+                            <div>
+                                <h3 id="titulo-modal-disciplina">{disciplinaEditando ? "Editar disciplina" : "Nova disciplina"}</h3>
+                                <p>{disciplinaEditando ? "Altere o nome ou a cor da matéria." : "Cadastre uma matéria para organizar suas tarefas."}</p>
+                            </div>
+                            <button
+                                className="botao-fechar-modal-formulario"
+                                type="button"
+                                onClick={fecharFormulario}
+                                aria-label="Fechar formulário de disciplina"
+                                disabled={salvando}
+                            >
+                                ×
+                            </button>
+                        </header>
 
                         <label htmlFor="nome-disciplina">Nome</label>
                         <input
@@ -170,7 +214,8 @@ function Disciplinas() {
                             <button
                                 type="button"
                                 className="botao-cancelar"
-                                onClick={() => setFormularioAberto(false)}
+                                onClick={fecharFormulario}
+                                disabled={salvando}
                             >
                                 Cancelar
                             </button>
@@ -179,6 +224,7 @@ function Disciplinas() {
                             </button>
                         </div>
                     </form>
+                    </div>
                 )}
 
                 {carregando && <p>Carregando disciplinas...</p>}

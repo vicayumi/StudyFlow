@@ -96,7 +96,7 @@ export class RepositorioSessoesEstudo {
                     dados.fim, dados.duracaoSegundos, dados.tipo, dados.atividade ?? null]
             );
             await conn.execute(
-                "UPDATE tarefas SET tempo_estudado = LEAST(duracao_estimada, tempo_estudado + ?) WHERE id = ? AND usuario_id = ?",
+                "UPDATE tarefas SET tempo_estudado = tempo_estudado + ? WHERE id = ? AND usuario_id = ?",
                 [Math.floor(dados.duracaoSegundos / 60), dados.tarefaId, usuarioId]
             );
             if (dados.planoSessaoId) {
