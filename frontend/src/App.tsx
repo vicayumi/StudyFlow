@@ -30,6 +30,44 @@ function LayoutPrincipal() {
     ];
     const [indiceFrase, setIndiceFrase] = useState(0);
 
+    useEffect(() => {
+        function verificarLembrete() {
+            if (localStorage.getItem("studyflow_lembrete_ativo") !== "true" || typeof Notification === "undefined" || Notification.permission !== "granted") return;
+            const agora = new Date();
+            const horaAtual = `${String(agora.getHours()).padStart(2, "0")}:${String(agora.getMinutes()).padStart(2, "0")}`;
+            let lembretes: { id: string; hora: string }[] = [];
+            try {
+                lembretes = JSON.parse(localStorage.getItem("studyflow_lembretes") || "[]") as { id: string; hora: string }[];
+            } catch { /* Usa a configuração anterior se a lista estiver inválida. */ }
+            if (lembretes.length === 0) {
+                const legado = localStorage.getItem("studyflow_lembrete_horario") || "18:00";
+                lembretes = [{ id: `lembrete-${legado}`, hora: legado }];
+            }
+            const hoje = `${agora.getFullYear()}-${String(agora.getMonth() + 1).padStart(2, "0")}-${String(agora.getDate()).padStart(2, "0")}`;
+            const chaveEnvios = `studyflow_lembretes_enviados_${hoje}`;
+            let enviados: string[] = [];
+            try { enviados = JSON.parse(localStorage.getItem(chaveEnvios) || "[]") as string[]; } catch { /* Reinicia os envios do dia. */ }
+            for (const lembrete of lembretes) {
+                if (horaAtual < lembrete.hora || enviados.includes(lembrete.id)) continue;
+                enviados.push(lembrete.id);
+                localStorage.setItem(chaveEnvios, JSON.stringify(enviados));
+                const aviso = new Notification("Hora de estudar?", {
+                    body: `Seu lembrete das ${lembrete.hora} chegou. Abra o StudyFlow e escolha seu próximo passo.`,
+                    icon: "/logo-studyflow.png",
+                    requireInteraction: false
+                });
+                aviso.onclick = () => { window.focus(); aviso.close(); };
+            }
+        }
+        verificarLembrete();
+        const intervalo = window.setInterval(verificarLembrete, 15000);
+        document.addEventListener("visibilitychange", verificarLembrete);
+        return () => {
+            window.clearInterval(intervalo);
+            document.removeEventListener("visibilitychange", verificarLembrete);
+        };
+    }, []);
+
     return (
         <div className="aplicativo">
                 <aside className="menu-lateral">
@@ -133,6 +171,8 @@ function App() {
     useEffect(() => {
         document.documentElement.dataset.theme =
             localStorage.getItem("studyflow_tema") === "escuro" ? "escuro" : "claro";
+        document.documentElement.dataset.texto = localStorage.getItem("studyflow_texto_grande") === "true" ? "grande" : "normal";
+        document.documentElement.dataset.animacoes = localStorage.getItem("studyflow_reduzir_animacoes") === "true" ? "reduzidas" : "normais";
     }, []);
 
     return (

@@ -41,12 +41,76 @@ export async function prepararBanco(): Promise<void> {
             sessoes JSON NOT NULL,
             prioridades JSON NOT NULL,
             tarefas_sem_tempo JSON NOT NULL,
+            fator_estimativa DECIMAL(4,2) NOT NULL DEFAULT 1.00,
+            tarefas_estimativa INT UNSIGNED NOT NULL DEFAULT 0,
             criado_em TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
             UNIQUE KEY uq_planos_usuario_data (usuario_id, data_inicio),
             CONSTRAINT fk_planos_usuario FOREIGN KEY (usuario_id)
                 REFERENCES usuarios (id) ON DELETE CASCADE
         ) ENGINE = InnoDB
     `);
+    await conexao.query(`
+        CREATE TABLE IF NOT EXISTS historico_planejamentos (
+            id CHAR(36) NOT NULL PRIMARY KEY,
+            usuario_id CHAR(36) NOT NULL,
+            data_inicio DATE NOT NULL,
+            estrategia VARCHAR(30) NOT NULL,
+            sessoes JSON NOT NULL,
+            prioridades JSON NOT NULL,
+            tarefas_sem_tempo JSON NOT NULL,
+            fator_estimativa DECIMAL(4,2) NOT NULL DEFAULT 1.00,
+            tarefas_estimativa INT UNSIGNED NOT NULL DEFAULT 0,
+            criado_em TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            INDEX idx_historico_usuario_data (usuario_id, criado_em),
+            CONSTRAINT fk_historico_planejamentos_usuario FOREIGN KEY (usuario_id)
+                REFERENCES usuarios (id) ON DELETE CASCADE
+        ) ENGINE = InnoDB
+    `);
+    await conexao.query(`
+        CREATE TABLE IF NOT EXISTS migracoes_banco (
+            chave VARCHAR(100) NOT NULL PRIMARY KEY,
+            aplicada_em TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+        ) ENGINE = InnoDB
+    `);
+    for (const tabela of ["planos_semanais", "historico_planejamentos"] as const) {
+        for (const [coluna, definicao] of [["fator_estimativa", "DECIMAL(4,2) NOT NULL DEFAULT 1.00"], ["tarefas_estimativa", "INT UNSIGNED NOT NULL DEFAULT 0"]] as const) {
+            const [colunas] = await conexao.execute<ColunaBanco[]>(
+                `SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS
+                 WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ?`, [tabela, coluna]
+            );
+            if (colunas.length === 0) await conexao.query(`ALTER TABLE \`${tabela}\` ADD COLUMN \`${coluna}\` ${definicao}`);
+        }
+    }
+    const [migracoesHistorico] = await conexao.execute<ColunaBanco[]>(
+        "SELECT chave AS COLUMN_NAME FROM migracoes_banco WHERE chave = 'historico_planos_existentes_v1'"
+    );
+    if (migracoesHistorico.length === 0) {
+        const conn = await conexao.getConnection();
+        try {
+            await conn.beginTransaction();
+            const [marcador] = await conn.execute<ColunaBanco[]>(
+                "SELECT chave AS COLUMN_NAME FROM migracoes_banco WHERE chave = 'historico_planos_existentes_v1' FOR UPDATE"
+            );
+            if (marcador.length === 0) {
+                await conn.query(`
+                    INSERT INTO historico_planejamentos
+                        (id, usuario_id, data_inicio, estrategia, sessoes, prioridades, tarefas_sem_tempo, fator_estimativa, tarefas_estimativa, criado_em)
+                    SELECT UUID(), plano.usuario_id, plano.data_inicio, plano.estrategia, plano.sessoes, plano.prioridades,
+                           plano.tarefas_sem_tempo, plano.fator_estimativa, plano.tarefas_estimativa, plano.criado_em
+                    FROM planos_semanais plano
+                    WHERE NOT EXISTS (
+                        SELECT 1 FROM historico_planejamentos historico
+                        WHERE historico.usuario_id = plano.usuario_id AND historico.data_inicio = plano.data_inicio
+                    )
+                `);
+                await conn.execute("INSERT INTO migracoes_banco (chave) VALUES ('historico_planos_existentes_v1')");
+            }
+            await conn.commit();
+        } catch (erro) {
+            await conn.rollback();
+            throw erro;
+        } finally { conn.release(); }
+    }
     await conexao.query(`
         CREATE TABLE IF NOT EXISTS sessoes_estudo_realizadas (
             id CHAR(36) NOT NULL PRIMARY KEY,

@@ -21,6 +21,8 @@ export interface ResumoEstudoDiario {
 export interface ResumoPeriodo {
     totalSegundos: number;
     dias: { data: string; totalSegundos: number }[];
+    porTipo: { tipo: SessaoRealizada["tipo"]; totalSegundos: number }[];
+    porFaixaHorario: { faixa: string; totalSegundos: number }[];
 }
 
 export async function buscarResumoPeriodo(periodo: "semana" | "mes"): Promise<ResumoPeriodo> {

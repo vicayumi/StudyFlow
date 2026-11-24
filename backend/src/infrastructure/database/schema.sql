@@ -34,10 +34,33 @@ CREATE TABLE IF NOT EXISTS planos_semanais (
     sessoes JSON NOT NULL,
     prioridades JSON NOT NULL,
     tarefas_sem_tempo JSON NOT NULL,
+    fator_estimativa DECIMAL(4,2) NOT NULL DEFAULT 1.00,
+    tarefas_estimativa INT UNSIGNED NOT NULL DEFAULT 0,
     criado_em TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     UNIQUE KEY uq_planos_usuario_data (usuario_id, data_inicio),
     CONSTRAINT fk_planos_usuario FOREIGN KEY (usuario_id)
         REFERENCES usuarios (id) ON DELETE CASCADE
+) ENGINE = InnoDB;
+
+CREATE TABLE IF NOT EXISTS historico_planejamentos (
+    id CHAR(36) NOT NULL PRIMARY KEY,
+    usuario_id CHAR(36) NOT NULL,
+    data_inicio DATE NOT NULL,
+    estrategia VARCHAR(30) NOT NULL,
+    sessoes JSON NOT NULL,
+    prioridades JSON NOT NULL,
+    tarefas_sem_tempo JSON NOT NULL,
+    fator_estimativa DECIMAL(4,2) NOT NULL DEFAULT 1.00,
+    tarefas_estimativa INT UNSIGNED NOT NULL DEFAULT 0,
+    criado_em TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_historico_usuario_data (usuario_id, criado_em),
+    CONSTRAINT fk_historico_planejamentos_usuario FOREIGN KEY (usuario_id)
+        REFERENCES usuarios (id) ON DELETE CASCADE
+) ENGINE = InnoDB;
+
+CREATE TABLE IF NOT EXISTS migracoes_banco (
+    chave VARCHAR(100) NOT NULL PRIMARY KEY,
+    aplicada_em TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE = InnoDB;
 
 CREATE TABLE IF NOT EXISTS sessoes_estudo_realizadas (

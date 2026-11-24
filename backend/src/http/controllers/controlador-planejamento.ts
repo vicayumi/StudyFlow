@@ -10,6 +10,7 @@ import { RepositorioHorarios, type DadosHorarioDisponivel } from "../../infrastr
 import { RepositorioTarefas } from "../../infrastructure/database/repositorio-tarefas.js";
 import { RepositorioPlanos } from "../../infrastructure/database/repositorio-planos.js";
 import { RepositorioSessoesEstudo } from "../../infrastructure/database/repositorio-sessoes-estudo.js";
+import type { TarefaComDisciplina } from "../../infrastructure/database/repositorio-tarefas.js";
 
 const DIAS_DA_SEMANA = 7;
 
@@ -36,12 +37,25 @@ export class ControladorPlanejamento {
         }
         try {
             const chave = this.formatarDataLocal(dataInicio.data);
-            const plano = await this.repositorioPlanos.buscarSemana(chave, requisicao.usuarioId!);
+            const [plano, concluidas, tarefas] = await Promise.all([
+                this.repositorioPlanos.buscarSemana(chave, requisicao.usuarioId!),
+                this.repositorioSessoes.listarIdsPlanejadosConcluidos(requisicao.usuarioId!),
+                this.repositorioTarefas.listarTodas(requisicao.usuarioId!)
+            ]);
             if (!plano) {
                 resposta.status(404).json({ erro: "Ainda não há um plano salvo para essa semana." });
                 return;
             }
-            resposta.json(plano);
+            const idsConcluidos = new Set(concluidas);
+            const tarefasPendentes = new Set(tarefas.filter((tarefa) => tarefa.estado !== "concluida").map((tarefa) => tarefa.id));
+            resposta.json({
+                ...plano,
+                sessoes: plano.sessoes
+                    .filter((sessao) => tarefasPendentes.has(sessao.tarefaId) && !idsConcluidos.has(sessao.id))
+                    .map((sessao) => ({ ...sessao, concluida: false })),
+                prioridades: plano.prioridades.filter((prioridade) => tarefasPendentes.has(prioridade.tarefaId)),
+                tarefasSemTempo: plano.tarefasSemTempo.filter((tarefa) => tarefasPendentes.has(tarefa.id))
+            });
         } catch (erro) {
             console.error("Erro ao carregar plano salvo:", erro);
             resposta.status(500).json({ erro: "Não foi possível carregar o plano salvo." });
@@ -56,15 +70,110 @@ export class ControladorPlanejamento {
             return;
         }
         try {
-            const [sessoes, concluidas] = await Promise.all([
+            const [sessoes, concluidas, tarefas] = await Promise.all([
                 this.repositorioPlanos.listarSessoesDoMes(ano, mes, requisicao.usuarioId!),
-                this.repositorioSessoes.listarIdsPlanejadosConcluidos(requisicao.usuarioId!)
+                this.repositorioSessoes.listarIdsPlanejadosConcluidos(requisicao.usuarioId!),
+                this.repositorioTarefas.listarTodas(requisicao.usuarioId!)
             ]);
             const idsConcluidos = new Set(concluidas);
-            resposta.json(sessoes.map((sessao) => ({ ...sessao, concluida: idsConcluidos.has(sessao.id) })));
+            const tarefasPendentes = new Set(tarefas.filter((tarefa) => tarefa.estado !== "concluida").map((tarefa) => tarefa.id));
+            resposta.json(sessoes
+                .filter((sessao) => tarefasPendentes.has(sessao.tarefaId) && !idsConcluidos.has(sessao.id))
+                .map((sessao) => ({ ...sessao, concluida: false })));
         } catch (erro) {
             console.error("Erro ao carregar sessões do calendário:", erro);
             resposta.status(500).json({ erro: "Não foi possível carregar os planos salvos." });
+        }
+    };
+
+    public listarHistorico = async (requisicao: Request, resposta: Response): Promise<void> => {
+        try { resposta.json(await this.repositorioPlanos.listarHistorico(requisicao.usuarioId!)); }
+        catch (erro) {
+            console.error("Erro ao listar histórico de planejamentos:", erro);
+            resposta.status(500).json({ erro: "Não foi possível carregar o histórico." });
+        }
+    };
+
+    public resumoEstimativas = async (requisicao: Request, resposta: Response): Promise<void> => {
+        try {
+            const tarefas = await this.repositorioTarefas.listarTodas(requisicao.usuarioId!);
+            resposta.json(this.calcularAjusteEstimativa(tarefas));
+        } catch (erro) {
+            console.error("Erro ao calcular estimativas adaptativas:", erro);
+            resposta.status(500).json({ erro: "Não foi possível analisar o histórico de estudo." });
+        }
+    };
+
+    public buscarHistorico = async (requisicao: Request, resposta: Response): Promise<void> => {
+        const id = this.obterId(requisicao);
+        if (!id) { resposta.status(400).json({ erro: "O identificador do planejamento é inválido." }); return; }
+        try {
+            const plano = await this.repositorioPlanos.buscarHistorico(id, requisicao.usuarioId!);
+            if (!plano) { resposta.status(404).json({ erro: "Planejamento não encontrado no histórico." }); return; }
+            const concluidas = new Set(await this.repositorioSessoes.listarIdsPlanejadosConcluidos(requisicao.usuarioId!));
+            resposta.json({ ...plano, sessoes: plano.sessoes.map((sessao) => ({ ...sessao, concluida: concluidas.has(sessao.id) })) });
+        } catch (erro) {
+            console.error("Erro ao abrir planejamento histórico:", erro);
+            resposta.status(500).json({ erro: "Não foi possível abrir esse planejamento." });
+        }
+    };
+
+    public excluirHistorico = async (requisicao: Request, resposta: Response): Promise<void> => {
+        const ids = requisicao.body?.ids;
+        if (ids !== undefined && (!Array.isArray(ids) || ids.length === 0 || ids.length > 50 || ids.some((id: unknown) => typeof id !== "string" || !id.trim() || id.length > 100))) {
+            resposta.status(400).json({ erro: "Selecione até 50 planejamentos válidos para excluir." });
+            return;
+        }
+        try {
+            await this.repositorioPlanos.excluirHistorico(requisicao.usuarioId!, ids as string[] | undefined);
+            resposta.status(204).send();
+        } catch (erro) {
+            console.error("Erro ao excluir histórico de planejamentos:", erro);
+            resposta.status(500).json({ erro: "Não foi possível excluir o histórico." });
+        }
+    };
+
+    public moverSessaoCalendario = async (requisicao: Request, resposta: Response): Promise<void> => {
+        const id = this.obterId(requisicao);
+        const { data, hora } = requisicao.body ?? {};
+        if (!id || typeof data !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(data) || typeof hora !== "string" || !/^([01]\d|2[0-3]):[0-5]\d$/.test(hora)) {
+            resposta.status(400).json({ erro: "Informe uma data e um horário válidos para mover a sessão." }); return;
+        }
+        const inicio = new Date(`${data}T${hora}:00`);
+        const [ano, mes, dia] = data.split("-").map(Number);
+        if (inicio.getFullYear() !== ano || inicio.getMonth() !== mes - 1 || inicio.getDate() !== dia) {
+            resposta.status(400).json({ erro: "A data escolhida não é válida." }); return;
+        }
+        if (inicio.getTime() < Date.now()) {
+            resposta.status(400).json({ erro: "Escolha um horário futuro para reagendar a sessão." }); return;
+        }
+        try {
+            if ((await this.repositorioSessoes.listarIdsPlanejadosConcluidos(requisicao.usuarioId!)).includes(id)) {
+                resposta.status(409).json({ erro: "Sessões concluídas não podem ser movidas." }); return;
+            }
+            const horarios = await this.repositorioHorarios.listar(requisicao.usuarioId!);
+            const sessao = await this.repositorioPlanos.moverSessao(id, inicio, horarios, requisicao.usuarioId!);
+            if (!sessao) { resposta.status(404).json({ erro: "Sessão planejada não encontrada." }); return; }
+            resposta.json(sessao);
+        } catch (erro) {
+            const mensagem = erro instanceof Error ? erro.message : "";
+            const conflito = mensagem.startsWith("Escolha um horário") || mensagem.startsWith("Esse horário se sobrepõe");
+            if (!conflito) console.error("Erro ao mover sessão no calendário:", erro);
+            resposta.status(conflito ? 409 : 500).json({ erro: conflito ? mensagem : "Não foi possível mover a sessão." });
+        }
+    };
+
+    public resumoPlanejado = async (requisicao: Request, resposta: Response): Promise<void> => {
+        const periodo = requisicao.query.periodo;
+        if (periodo !== "hoje" && periodo !== "semana" && periodo !== "mes") {
+            resposta.status(400).json({ erro: "Selecione um período válido para comparar o planejamento." });
+            return;
+        }
+        try {
+            resposta.json(await this.repositorioPlanos.resumoPlanejado(periodo, requisicao.usuarioId!));
+        } catch (erro) {
+            console.error("Erro ao carregar o resumo de tempo planejado:", erro);
+            resposta.status(500).json({ erro: "Não foi possível carregar o tempo planejado." });
         }
     };
 
@@ -220,14 +329,18 @@ export class ControladorPlanejamento {
                 this.repositorioHorarios.listar(requisicao.usuarioId!),
                 this.repositorioTarefas.listarTodas(requisicao.usuarioId!)
             ]);
+            const ajusteEstimativa = this.calcularAjusteEstimativa(tarefasSalvas);
             const tarefas = tarefasSalvas.map((dados) => {
+                const duracaoParaPlanejar = dados.estado === "concluida"
+                    ? dados.duracaoEstimada
+                    : Math.max(1, Math.round(dados.duracaoEstimada * ajusteEstimativa.fator));
                 const tarefa = new Tarefa(
                     dados.id,
                     dados.titulo,
                     dados.descricao,
                     new Date(dados.dataPrazo),
                     dados.dificuldade,
-                    dados.duracaoEstimada,
+                    duracaoParaPlanejar,
                     dados.pesoAvaliacao
                 );
 
@@ -296,7 +409,8 @@ export class ControladorPlanejamento {
                 estrategia: estrategia.id,
                 sessoes,
                 prioridades,
-                tarefasSemTempo
+                tarefasSemTempo,
+                ajusteEstimativa
             };
             await this.repositorioPlanos.salvar(dadosPlano, requisicao.usuarioId!);
 
@@ -383,6 +497,20 @@ export class ControladorPlanejamento {
             case "peso": return { id: valor, instancia: new EstrategiaPeso() };
             default: return null;
         }
+    }
+
+    private calcularAjusteEstimativa(tarefas: TarefaComDisciplina[]): {
+        tarefasConcluidasUsadas: number; fator: number; adaptacaoAtiva: boolean;
+    } {
+        const proporcoes = tarefas
+            .filter((tarefa) => tarefa.estado === "concluida" && tarefa.tempoEstudado > 0 && tarefa.duracaoEstimada > 0)
+            .map((tarefa) => tarefa.tempoEstudado / tarefa.duracaoEstimada)
+            .sort((a, b) => a - b);
+        if (proporcoes.length < 3) return { tarefasConcluidasUsadas: proporcoes.length, fator: 1, adaptacaoAtiva: false };
+        const meio = Math.floor(proporcoes.length / 2);
+        const mediana = proporcoes.length % 2 === 0 ? (proporcoes[meio - 1] + proporcoes[meio]) / 2 : proporcoes[meio];
+        const fator = Math.round(Math.min(2, Math.max(0.5, mediana)) * 100) / 100;
+        return { tarefasConcluidasUsadas: proporcoes.length, fator, adaptacaoAtiva: true };
     }
 
     private formatarDataLocal(data: Date): string {

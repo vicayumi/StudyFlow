@@ -66,7 +66,9 @@ export class GeradorPlanejamento {
         })).sort((a, b) => b.prioridade - a.prioridade);
 
         for (const tarefa of tarefasOrdenadas) {
-            let minutosRestantes = tarefa.duracaoEstimada;
+            // Usa a previsão adaptada, descontando apenas o progresso real registrado.
+            // A duração informada pela pessoa continua intacta no banco de dados.
+            let minutosRestantes = tarefa.obterTempoRestante();
 
             for (
                 let indice = 0;

@@ -25,6 +25,20 @@ export interface SessaoPlanejada {
     concluida?: boolean;
 }
 
+export interface HistoricoPlanejamento {
+    id: string;
+    dataInicio: string;
+    estrategia: string;
+    criadoEm: string;
+    totalSessoes: number;
+}
+
+export interface ResumoEstimativas {
+    tarefasConcluidasUsadas: number;
+    fator: number;
+    adaptacaoAtiva: boolean;
+}
+
 export interface PrioridadePlanejada {
     tarefaId: string;
     titulo: string;
@@ -50,6 +64,12 @@ export interface PlanoSemanal {
     sessoes: SessaoPlanejada[];
     prioridades: PrioridadePlanejada[];
     tarefasSemTempo: TarefaSemTempo[];
+    ajusteEstimativa?: ResumoEstimativas;
+}
+
+export interface ResumoPlanejado {
+    totalMinutos: number;
+    dias: { data: string; totalMinutos: number }[];
 }
 
 const CABECALHOS_JSON = {
@@ -101,6 +121,36 @@ export function buscarPlanoSemanal(dataInicio: string): Promise<PlanoSemanal> {
 
 export function listarSessoesCalendario(ano: number, mes: number): Promise<SessaoPlanejada[]> {
     return requisicaoApi<SessaoPlanejada[]>(`/planejamento/calendario?ano=${ano}&mes=${mes}`);
+}
+
+export function moverSessaoCalendario(id: string, data: string, hora: string): Promise<SessaoPlanejada> {
+    return requisicaoApi<SessaoPlanejada>(`/planejamento/calendario/${encodeURIComponent(id)}/mover`, {
+        method: "PUT", headers: CABECALHOS_JSON, body: JSON.stringify({ data, hora })
+    });
+}
+
+export function listarHistoricoPlanejamentos(): Promise<HistoricoPlanejamento[]> {
+    return requisicaoApi<HistoricoPlanejamento[]>("/planejamento/historico");
+}
+
+export async function excluirHistoricoPlanejamentos(ids?: string[]): Promise<void> {
+    await requisicaoApi<void>("/planejamento/historico", {
+        method: "DELETE",
+        headers: CABECALHOS_JSON,
+        ...(ids ? { body: JSON.stringify({ ids }) } : {})
+    });
+}
+
+export function buscarPlanejamentoHistorico(id: string): Promise<PlanoSemanal> {
+    return requisicaoApi<PlanoSemanal>(`/planejamento/historico/${encodeURIComponent(id)}`);
+}
+
+export function buscarResumoEstimativas(): Promise<ResumoEstimativas> {
+    return requisicaoApi<ResumoEstimativas>("/planejamento/estimativas");
+}
+
+export function buscarResumoPlanejado(periodo: "hoje" | "semana" | "mes"): Promise<ResumoPlanejado> {
+    return requisicaoApi<ResumoPlanejado>(`/planejamento/resumo?periodo=${periodo}`);
 }
 
 export function gerarPlanoSemanal(

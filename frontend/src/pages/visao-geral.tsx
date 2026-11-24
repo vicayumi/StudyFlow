@@ -2,13 +2,13 @@
 import { Link } from "react-router-dom";
 import { useEffect, useState, type FormEvent } from "react";
 import { useAutenticacao } from "../contexto/AutenticacaoContexto";
-import { atualizarPerfil, type DadosPerfil } from "../services/autenticacao";
+import { alterarSenha, atualizarPerfil, type DadosPerfil } from "../services/autenticacao";
 import { listarDisciplinas } from "../services/disciplinas";
 import { listarTarefas } from "../services/tarefas";
 import NotificacaoTemporaria from "../components/notificacao-temporaria";
 
 function VisaoGeral() {
-    const { usuario, definirUsuario } = useAutenticacao();
+    const { usuario, definirUsuario, sair } = useAutenticacao();
     const [resumo, setResumo] = useState<{
         disciplinas: number;
         pendentes: number;
@@ -16,6 +16,14 @@ function VisaoGeral() {
     } | null>(null);
     const [erroResumo, setErroResumo] = useState("");
     const [mostrarPerfil, setMostrarPerfil] = useState(false);
+    const [mostrarMenuConta, setMostrarMenuConta] = useState(false);
+    const [mostrarSenha, setMostrarSenha] = useState(false);
+    const [senhaAtual, setSenhaAtual] = useState("");
+    const [novaSenha, setNovaSenha] = useState("");
+    const [confirmarSenha, setConfirmarSenha] = useState("");
+    const [erroSenha, setErroSenha] = useState("");
+    const [salvandoSenha, setSalvandoSenha] = useState(false);
+    const [sucessoConta, setSucessoConta] = useState("");
     const [perfil, setPerfil] = useState<DadosPerfil>({
         nome: "",
         email: "",
@@ -107,6 +115,28 @@ function VisaoGeral() {
         }
     }
 
+    async function salvarSenha(evento: FormEvent<HTMLFormElement>) {
+        evento.preventDefault();
+        setErroSenha("");
+        if (novaSenha !== confirmarSenha) {
+            setErroSenha("A nova senha e a confirmação estão diferentes.");
+            return;
+        }
+        setSalvandoSenha(true);
+        try {
+            await alterarSenha(senhaAtual, novaSenha);
+            setSenhaAtual("");
+            setNovaSenha("");
+            setConfirmarSenha("");
+            setMostrarSenha(false);
+            setSucessoConta("Sua senha foi alterada com sucesso.");
+        } catch (falha) {
+            setErroSenha(falha instanceof Error ? falha.message : "Não foi possível alterar sua senha.");
+        } finally {
+            setSalvandoSenha(false);
+        }
+    }
+
     function atualizarCampo<K extends keyof DadosPerfil>(campo: K, valor: DadosPerfil[K]) {
         setPerfil((atual) => ({ ...atual, [campo]: valor }));
     }
@@ -122,10 +152,22 @@ function VisaoGeral() {
                     </p>
                 </div>
 
-                <button type="button" className="data-hoje botao-perfil" onClick={abrirPerfil}>
-                    <span>✧</span> Meu StudyFlow
-                </button>
+                <div className="menu-conta-container">
+                    <button type="button" className="data-hoje botao-perfil" aria-expanded={mostrarMenuConta} aria-haspopup="menu" onClick={() => setMostrarMenuConta((aberto) => !aberto)}>
+                        <span>✧</span> Meu StudyFlow <span aria-hidden="true">⌄</span>
+                    </button>
+                    {mostrarMenuConta && (
+                        <div className="menu-conta" role="menu" aria-label="Menu da conta">
+                            <div className="resumo-menu-conta"><strong>{usuario?.nome}</strong><span>{usuario?.email}</span></div>
+                            <button type="button" role="menuitem" onClick={() => { setMostrarMenuConta(false); abrirPerfil(); }}>Dados pessoais</button>
+                            <button type="button" role="menuitem" onClick={() => { setErroSenha(""); setMostrarMenuConta(false); setMostrarSenha(true); }}>Alterar senha</button>
+                            <button type="button" role="menuitem" className="acao-sair-menu-conta" onClick={() => void sair()}>Sair da conta</button>
+                        </div>
+                    )}
+                </div>
             </header>
+
+            {sucessoConta && <NotificacaoTemporaria mensagem={sucessoConta} tipo="sucesso" />}
 
             <section className="destaque">
                 <div>
@@ -260,6 +302,29 @@ function VisaoGeral() {
                             <div className="acoes-modal-perfil">
                                 <button type="button" className="botao-secundario" onClick={() => setMostrarPerfil(false)}>Cancelar</button>
                                 <button type="submit" className="botao-salvar" disabled={salvandoPerfil}>{salvandoPerfil ? "Salvando..." : "Salvar alterações"}</button>
+                            </div>
+                        </form>
+                    </section>
+                </div>
+            )}
+            {mostrarSenha && (
+                <div className="fundo-modal-perfil" onMouseDown={(evento) => { if (evento.target === evento.currentTarget) setMostrarSenha(false); }}>
+                    <section className="modal-perfil modal-alterar-senha" role="dialog" aria-modal="true" aria-labelledby="titulo-alterar-senha">
+                        <button type="button" className="fechar-modal-perfil" onClick={() => setMostrarSenha(false)} aria-label="Fechar alteração de senha">×</button>
+                        <p className="sobretitulo">SEGURANÇA DA CONTA</p>
+                        <h2 id="titulo-alterar-senha">Alterar senha</h2>
+                        <p className="descricao-modal-perfil">Confirme sua senha atual para cadastrar uma nova.</p>
+                        {erroSenha && <NotificacaoTemporaria mensagem={erroSenha} tipo="erro" />}
+                        <form className="formulario-perfil" onSubmit={(evento) => void salvarSenha(evento)}>
+                            <label htmlFor="senha-atual-conta">Senha atual</label>
+                            <input id="senha-atual-conta" type="password" autoComplete="current-password" value={senhaAtual} onChange={(evento) => setSenhaAtual(evento.target.value)} maxLength={128} required />
+                            <label htmlFor="nova-senha-conta">Nova senha</label>
+                            <input id="nova-senha-conta" type="password" autoComplete="new-password" value={novaSenha} onChange={(evento) => setNovaSenha(evento.target.value)} minLength={10} maxLength={128} required />
+                            <label htmlFor="confirmar-nova-senha-conta">Confirme a nova senha</label>
+                            <input id="confirmar-nova-senha-conta" type="password" autoComplete="new-password" value={confirmarSenha} onChange={(evento) => setConfirmarSenha(evento.target.value)} minLength={10} maxLength={128} required />
+                            <div className="acoes-modal-perfil">
+                                <button type="button" className="botao-secundario" onClick={() => setMostrarSenha(false)}>Cancelar</button>
+                                <button type="submit" className="botao-salvar" disabled={salvandoSenha}>{salvandoSenha ? "Salvando..." : "Atualizar senha"}</button>
                             </div>
                         </form>
                     </section>

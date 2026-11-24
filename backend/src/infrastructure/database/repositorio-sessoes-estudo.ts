@@ -31,6 +31,8 @@ export class RepositorioSessoesEstudo {
     public async resumoPeriodo(periodo: "semana" | "mes", usuarioId: string): Promise<{
         totalSegundos: number;
         dias: { data: string; totalSegundos: number }[];
+        porTipo: { tipo: SessaoRealizada["tipo"]; totalSegundos: number }[];
+        porFaixaHorario: { faixa: string; totalSegundos: number }[];
     }> {
         const hoje = new Date();
         const inicio = periodo === "semana"
@@ -45,6 +47,24 @@ export class RepositorioSessoesEstudo {
              GROUP BY DATE(inicio) ORDER BY DATE(inicio)`,
             [usuarioId, `${formatar(inicio)} 00:00:00`, `${formatar(fimAmanha)} 00:00:00`]
         );
+        const [linhasTipo] = await conexao.execute<Array<RowDataPacket & { tipo: SessaoRealizada["tipo"]; totalSegundos: number }>>(
+            `SELECT tipo, SUM(duracao_segundos) AS totalSegundos
+             FROM sessoes_estudo_realizadas
+             WHERE usuario_id = ? AND inicio >= ? AND inicio < ?
+             GROUP BY tipo ORDER BY totalSegundos DESC`,
+            [usuarioId, `${formatar(inicio)} 00:00:00`, `${formatar(fimAmanha)} 00:00:00`]
+        );
+        const [linhasFaixa] = await conexao.execute<Array<RowDataPacket & { faixa: string; totalSegundos: number }>>(
+            `SELECT CASE
+                WHEN HOUR(inicio) < 12 THEN 'Manhã'
+                WHEN HOUR(inicio) < 18 THEN 'Tarde'
+                ELSE 'Noite'
+             END AS faixa, SUM(duracao_segundos) AS totalSegundos
+             FROM sessoes_estudo_realizadas
+             WHERE usuario_id = ? AND inicio >= ? AND inicio < ?
+             GROUP BY faixa ORDER BY FIELD(faixa, 'Manhã', 'Tarde', 'Noite')`,
+            [usuarioId, `${formatar(inicio)} 00:00:00`, `${formatar(fimAmanha)} 00:00:00`]
+        );
         const totais = new Map(linhas.map((linha) => [
             linha.data instanceof Date ? formatar(linha.data) : String(linha.data).slice(0, 10),
             Number(linha.totalSegundos)
@@ -57,7 +77,11 @@ export class RepositorioSessoesEstudo {
             const data = formatar(dia);
             return { data, totalSegundos: totais.get(data) ?? 0 };
         });
-        return { totalSegundos: dias.reduce((total, dia) => total + dia.totalSegundos, 0), dias };
+        return {
+            totalSegundos: dias.reduce((total, dia) => total + dia.totalSegundos, 0), dias,
+            porTipo: linhasTipo.map((linha) => ({ tipo: linha.tipo, totalSegundos: Number(linha.totalSegundos) })),
+            porFaixaHorario: linhasFaixa.map((linha) => ({ faixa: linha.faixa, totalSegundos: Number(linha.totalSegundos) }))
+        };
     }
 
     public async listarIdsPlanejadosConcluidos(usuarioId: string): Promise<string[]> {
