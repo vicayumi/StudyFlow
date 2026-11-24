@@ -86,6 +86,7 @@ No diretório `backend`:
 ```powershell
 npm run build       # compila TypeScript para dist/
 npm test            # executa os testes automatizados
+npm run test:integration # prepara e testa o fluxo integrado no MySQL
 npm run test:watch  # executa os testes em modo de acompanhamento
 npm start           # inicia a versão compilada
 ```
@@ -98,7 +99,7 @@ npm run lint   # verifica problemas de lint
 npm run preview
 ```
 
-Os testes automatizados do backend ficam em `backend/src/tests`. O teste de integração MySQL depende de um banco acessível e das variáveis de ambiente configuradas.
+Os testes automatizados do backend ficam em `backend/src/tests`. Para a integração, mantenha o MySQL ativo e configure as credenciais em `backend/.env`. `npm run test:integration` usa o banco indicado por `DB_NAME` como base e prepara uma base isolada com o sufixo `_test` (por exemplo, `studyflow_test`); a conta MySQL precisa poder criar bancos. O script aplica o schema nessa base e executa os handlers e repositórios reais sem abrir uma porta HTTP. Ele não apaga a base de teste, e remove apenas os registros criados por cada teste.
 
 ## API
 
@@ -116,4 +117,4 @@ O cadastro de usuário recebe nome, e-mail, senha, nível de estudo, instituiç�
 
 ## Situação do projeto
 
-O núcleo de cadastro, priorização, distribuição de sessões, registro de progresso e reorganização está implementado. O projeto também contém funcionalidades complementares de calendário, histórico, estatísticas, estimativas adaptativas e configurações. Ainda vale validar o fluxo completo com dados reais de MySQL e ampliar a cobertura de integração conforme as regras evoluírem.
+O núcleo de cadastro, priorização, distribuição de sessões, registro de progresso e reorganização está implementado. Os testes de integração cobrem autenticação, isolamento por conta, tarefas, sessões, geração do plano, histórico e consistência do calendário. Em 24/11/2026, a suíte geral passou com 48 testes e a integração com MySQL local passou com 2 testes no banco isolado `studyflow_test`.

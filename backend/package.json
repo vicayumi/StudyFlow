@@ -8,6 +8,7 @@
     "build": "tsc",
     "start": "node dist/server.js",
     "test": "vitest run",
+    "test:integration": "node scripts/testar-integracao-mysql.mjs",
     "test:watch": "vitest"
   },
   "keywords": [],
