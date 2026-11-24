@@ -63,25 +63,6 @@ CREATE TABLE IF NOT EXISTS migracoes_banco (
     aplicada_em TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE = InnoDB;
 
-CREATE TABLE IF NOT EXISTS sessoes_estudo_realizadas (
-    id CHAR(36) NOT NULL PRIMARY KEY,
-    usuario_id CHAR(36) NOT NULL,
-    tarefa_id CHAR(36) NOT NULL,
-    plano_sessao_id VARCHAR(100) NULL,
-    inicio DATETIME NOT NULL,
-    fim DATETIME NOT NULL,
-    duracao_segundos INT UNSIGNED NOT NULL,
-    tipo ENUM('pomodoro', 'manual', 'cronometro', 'planejada') NOT NULL,
-    atividade VARCHAR(100) NULL,
-    criado_em TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    INDEX idx_sessoes_usuario_inicio (usuario_id, inicio),
-    UNIQUE KEY uq_sessao_plano_usuario (usuario_id, plano_sessao_id),
-    CONSTRAINT fk_sessoes_estudo_usuario FOREIGN KEY (usuario_id)
-        REFERENCES usuarios (id) ON DELETE CASCADE,
-    CONSTRAINT fk_sessoes_estudo_tarefa FOREIGN KEY (tarefa_id)
-        REFERENCES tarefas (id) ON DELETE CASCADE
-) ENGINE = InnoDB;
-
 CREATE TABLE IF NOT EXISTS disciplinas (
     id CHAR(36) NOT NULL PRIMARY KEY,
     usuario_id CHAR(36) NULL,
@@ -121,4 +102,23 @@ CREATE TABLE IF NOT EXISTS tarefas (
         REFERENCES disciplinas (id)
         ON UPDATE CASCADE
         ON DELETE RESTRICT
+) ENGINE = InnoDB;
+
+CREATE TABLE IF NOT EXISTS sessoes_estudo_realizadas (
+    id CHAR(36) NOT NULL PRIMARY KEY,
+    usuario_id CHAR(36) NOT NULL,
+    tarefa_id CHAR(36) NOT NULL,
+    plano_sessao_id VARCHAR(100) NULL,
+    inicio DATETIME NOT NULL,
+    fim DATETIME NOT NULL,
+    duracao_segundos INT UNSIGNED NOT NULL,
+    tipo ENUM('pomodoro', 'manual', 'cronometro', 'planejada') NOT NULL,
+    atividade VARCHAR(100) NULL,
+    criado_em TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_sessoes_usuario_inicio (usuario_id, inicio),
+    UNIQUE KEY uq_sessao_plano_usuario (usuario_id, plano_sessao_id),
+    CONSTRAINT fk_sessoes_estudo_usuario FOREIGN KEY (usuario_id)
+        REFERENCES usuarios (id) ON DELETE CASCADE,
+    CONSTRAINT fk_sessoes_estudo_tarefa FOREIGN KEY (tarefa_id)
+        REFERENCES tarefas (id) ON DELETE CASCADE
 ) ENGINE = InnoDB;
